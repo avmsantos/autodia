@@ -1,4 +1,4 @@
-name: moto_carro_app
+name: autodia
 description: "App de controle de manutenção de veículos (carro e moto) com lembretes por data e por km."
 publish_to: 'none'
 version: 0.1.0+1

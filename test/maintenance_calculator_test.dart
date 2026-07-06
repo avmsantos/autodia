@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:moto_carro_app/core/calculations/maintenance_calculator.dart';
+import 'package:autodia/core/calculations/maintenance_calculator.dart';
 
 void main() {
   group('calculateMaintenanceStatus - por data', () {

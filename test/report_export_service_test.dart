@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:moto_carro_app/core/services/report_export_service.dart';
+import 'package:autodia/core/services/report_export_service.dart';
 
 void main() {
   group('ReportExportService', () {
@@ -11,12 +11,12 @@ void main() {
         year: 2025,
         total: 1250.5,
         monthlyValues: [
-          ReportExportMonth(month: 'Jan', value: 500.0),
-          ReportExportMonth(month: 'Fev', value: 750.5),
+        const ReportExportMonth(month: 'Jan', value: 500.0),
+          const ReportExportMonth(month: 'Fev', value: 750.5),
         ],
         categoryValues: [
-          ReportExportCategory(name: 'Manutenção', value: 900.0),
-          ReportExportCategory(name: 'Combustível', value: 350.5),
+          const ReportExportCategory(name: 'Manutenção', value: 900.0),
+          const ReportExportCategory(name: 'Combustível', value: 350.5),
         ],
       );
 
