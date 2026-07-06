@@ -7,4 +7,5 @@ abstract class AppRoutes {
   static const addReminder = '/veiculo/lembrete/novo';
   static const paywall = '/premium';
   static const report = '/veiculo/relatorio';
+  static const profile = '/perfil';
 }

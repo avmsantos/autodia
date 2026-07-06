@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "248487173493-2mr6qr2h9s8k30f2juo07tcsh3hno7j1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.autodia.app",
+            "certificate_hash": "d7e280a1961b6c7894e97f0050cbb997e639e1f3"
+          }
+        },
+        {
           "client_id": "248487173493-721708q7h7c1qg8v7s71bqhkmc4tqnvk.apps.googleusercontent.com",
           "client_type": 3
         }

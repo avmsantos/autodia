@@ -15,7 +15,8 @@ class LoginController extends GetxController {
         Get.offAllNamed(AppRoutes.home);
       }
     } catch (e) {
-      Get.snackbar('Erro ao entrar', 'Tente novamente em instantes.');
+      print('Erro ao entrar com Google: $e');
+      Get.snackbar('Erro ao entrar', 'Tente novamente em instantes. $e');
     } finally {
       isLoading.value = false;
     }

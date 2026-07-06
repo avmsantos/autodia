@@ -15,7 +15,16 @@ class ReportView extends GetView<ReportController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Gastos · ${controller.vehicle.nome}')),
+      appBar: AppBar(
+        title: Text('Gastos · ${controller.vehicle.nome}'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.download_outlined),
+            tooltip: 'Exportar relatório',
+            onPressed: controller.exportarRelatorio,
+          ),
+        ],
+      ),
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
@@ -119,7 +128,7 @@ class _MonthlyBarChart extends StatelessWidget {
       return BarChart(
         BarChartData(
           maxY: maiorValor * 1.2,
-          barTouchData: BarTouchData(enabled: true),
+          barTouchData: const BarTouchData(enabled: true),
           titlesData: FlTitlesData(
             leftTitles: const AxisTitles(
               sideTitles: SideTitles(showTitles: false),

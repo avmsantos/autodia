@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 
+import '../../core/services/report_export_service.dart';
 import '../../data/local/app_database.dart';
 
 class GastoMensal {
@@ -16,6 +17,7 @@ class GastoCategoria {
 
 class ReportController extends GetxController {
   final AppDatabase _db = Get.find<AppDatabase>();
+  final ReportExportService exportService = ReportExportService();
   late final Vehicle vehicle;
 
   final RxBool isLoading = true.obs;
@@ -59,6 +61,26 @@ class ReportController extends GetxController {
   void selecionarAno(int ano) {
     anoSelecionado.value = ano;
     _recalcular();
+  }
+
+  Future<void> exportarRelatorio() async {
+    final file = await exportService.exportCsv(
+      vehicleName: vehicle.nome,
+      year: anoSelecionado.value,
+      total: totalAno.value,
+      monthlyValues: gastoPorMes
+          .map((g) => ReportExportMonth(month: g.mes.toString(), value: g.valor))
+          .toList(),
+      categoryValues: gastoPorCategoria
+          .map((g) => ReportExportCategory(name: g.nome, value: g.valor))
+          .toList(),
+    );
+
+    Get.snackbar(
+      'Relatório exportado',
+      'Arquivo salvo em ${file.path}',
+      duration: const Duration(seconds: 4),
+    );
   }
 
   void _recalcular() {

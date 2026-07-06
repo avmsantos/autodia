@@ -12,6 +12,8 @@ import '../../modules/home/home_binding.dart';
 import '../../modules/home/home_view.dart';
 import '../../modules/paywall/paywall_binding.dart';
 import '../../modules/paywall/paywall_view.dart';
+import '../../modules/profile/profile_binding.dart';
+import '../../modules/profile/profile_view.dart';
 import '../../modules/report/report_binding.dart';
 import '../../modules/report/report_view.dart';
 import '../../modules/vehicle_detail/vehicle_detail_binding.dart';
@@ -59,6 +61,11 @@ class AppPages {
       name: AppRoutes.report,
       page: () => const ReportView(),
       binding: ReportBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.profile,
+      page: () => const ProfileView(),
+      binding: ProfileBinding(),
     ),
   ];
 }

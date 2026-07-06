@@ -24,6 +24,11 @@ class HomeView extends GetView<HomeController> {
             onPressed: () =>
                 Get.find<NotificationService>().testarNotificacaoImediata(),
           ),
+          IconButton(
+            icon: const Icon(Icons.person_outline),
+            tooltip: 'Perfil',
+            onPressed: () => Get.toNamed(AppRoutes.profile),
+          ),
           Obx(
             () => IconButton(
               icon: Icon(
