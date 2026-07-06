@@ -1,0 +1,63 @@
+name: moto_carro_app
+description: "App de controle de manutenção de veículos (carro e moto) com lembretes por data e por km."
+publish_to: 'none'
+version: 0.1.0+1
+ 
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+ 
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Estado / navegação
+  get: ^4.6.6
+
+  # Banco local
+  drift: ^2.16.0
+  sqlite3_flutter_libs: ^0.5.20
+  path_provider: ^2.1.3
+  path: ^1.9.0
+
+  # Firebase (login + amarrar premium ao usuário)
+  firebase_core: ^3.1.0
+  firebase_auth: ^5.1.0
+  google_sign_in: ^6.2.1
+
+  # RevenueCat (assinatura Premium)
+  purchases_flutter: ^10.4.0
+
+  # Ads (banner discreto no footer)
+  google_mobile_ads: ^5.1.0
+
+  # Utilidades
+  intl: ^0.20.2
+  image_picker: ^1.1.2
+  uuid: ^4.4.0
+
+  # Notificações locais (lembretes de vencimento)
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.9.4
+  flutter_timezone: ^3.0.1
+
+  # OCR de documento (leitura automática de data de vencimento)
+  google_mlkit_text_recognition: ^0.13.0
+
+  cupertino_icons: ^1.0.6
+  collection: ^1.18.0
+  fl_chart: ^1.2.0
+  disable_battery_optimization: ^1.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  build_runner: ^2.4.9
+  drift_dev: ^2.16.0
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  # assets:
+  #   - assets/images/
