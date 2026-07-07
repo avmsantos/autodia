@@ -10,6 +10,8 @@ import '../../modules/auth/login_binding.dart';
 import '../../modules/auth/login_view.dart';
 import '../../modules/home/home_binding.dart';
 import '../../modules/home/home_view.dart';
+import '../../modules/notification_settings/notification_settings_binding.dart';
+import '../../modules/notification_settings/notification_settings_view.dart';
 import '../../modules/paywall/paywall_binding.dart';
 import '../../modules/paywall/paywall_view.dart';
 import '../../modules/profile/profile_binding.dart';
@@ -66,6 +68,11 @@ class AppPages {
       name: AppRoutes.profile,
       page: () => const ProfileView(),
       binding: ProfileBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.notificationSettings,
+      page: () => const NotificationSettingsView(),
+      binding: NotificationSettingsBinding(),
     ),
   ];
 }

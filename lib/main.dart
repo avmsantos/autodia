@@ -12,6 +12,7 @@ import 'core/services/notification_service.dart';
 import 'core/services/purchase_service.dart';
 import 'data/local/app_database.dart';
 import 'firebase_options.dart';
+import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,17 +61,11 @@ class MotoCarroApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Manutenção Veicular',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: const Color(0xFF1B5E20),
-        brightness: Brightness.light,
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: const Color(0xFF1B5E20),
-        brightness: Brightness.dark,
-      ),
-      themeMode: ThemeMode.system,
+      theme: AppTheme.light,
+      // Referência visual é só light por enquanto; travando o modo pra
+      // não cair num dark theme desatualizado quando o celular estiver
+      // em modo escuro.
+      themeMode: ThemeMode.light,
       locale: const Locale('pt', 'BR'),
       supportedLocales: const [Locale('pt', 'BR')],
       localizationsDelegates: const [

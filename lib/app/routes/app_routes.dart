@@ -8,4 +8,5 @@ abstract class AppRoutes {
   static const paywall = '/premium';
   static const report = '/veiculo/relatorio';
   static const profile = '/perfil';
+  static const notificationSettings = '/notificacoes';
 }

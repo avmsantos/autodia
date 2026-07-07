@@ -8,6 +8,7 @@ import '../../core/services/ocr_service.dart';
 import '../../core/services/purchase_service.dart';
 import '../../data/local/app_database.dart';
 import '../../data/local/tables.dart';
+import '../../widgets/app_snackbar.dart';
 
 class AddReminderController extends GetxController {
   final AppDatabase _db = Get.find<AppDatabase>();
@@ -116,14 +117,14 @@ class AddReminderController extends GetxController {
       final dataEncontrada = await _ocrService.extractDueDateFromImage(foto.path);
       if (dataEncontrada != null) {
         dataVencimento.value = dataEncontrada;
-        Get.snackbar(
-          'Data encontrada',
-          'Confira se ${_formatarData(dataEncontrada)} está certo antes de salvar.',
+        showSuccessSnackbar(
+          title: 'Data encontrada',
+          message: 'Confira se ${_formatarData(dataEncontrada)} está certo antes de salvar.',
         );
       } else {
-        Get.snackbar(
-          'Não encontrei a data',
-          'Preenche manualmente — a leitura automática não conseguiu identificar.',
+        showErrorSnackbar(
+          title: 'Não encontrei a data',
+          message: 'Preenche manualmente — a leitura automática não conseguiu identificar.',
         );
       }
     } finally {
@@ -146,7 +147,10 @@ class AddReminderController extends GetxController {
 
   Future<void> salvar() async {
     if (categoriaSelecionada.value == null) {
-      Get.snackbar('Falta a categoria', 'Escolha o tipo de manutenção.');
+      showErrorSnackbar(
+        title: 'Falta a categoria',
+        message: 'Escolha o tipo de manutenção.',
+      );
       return;
     }
 
@@ -186,7 +190,10 @@ class AddReminderController extends GetxController {
 
   Future<void> _salvarMecanica() async {
     if (!usarData.value && !usarKm.value) {
-      Get.snackbar('Falta o gatilho', 'Escolha ao menos data ou km.');
+      showErrorSnackbar(
+        title: 'Falta o gatilho',
+        message: 'Escolha ao menos data ou km.',
+      );
       return;
     }
 

@@ -191,6 +191,33 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  Future<void> updateEvent({
+    required String eventId,
+    required String categoriaId,
+    required DateTime dataRealizada,
+    int? kmRealizado,
+    double? valorGasto,
+    String? oficina,
+    String? observacao,
+    String? anexoPath,
+  }) {
+    return (update(maintenanceEvents)..where((e) => e.id.equals(eventId))).write(
+      MaintenanceEventsCompanion(
+        categoriaId: Value(categoriaId),
+        dataRealizada: Value(dataRealizada),
+        kmRealizado: Value(kmRealizado),
+        valorGasto: Value(valorGasto),
+        oficina: Value(oficina),
+        observacao: Value(observacao),
+        anexoPath: Value(anexoPath),
+      ),
+    );
+  }
+
+  Future<void> deleteEvent(String eventId) {
+    return (delete(maintenanceEvents)..where((e) => e.id.equals(eventId))).go();
+  }
+
   Stream<List<MaintenanceEvent>> streamEventsForVehicle(String veiculoId) {
     return (select(maintenanceEvents)
           ..where((e) => e.veiculoId.equals(veiculoId))
@@ -295,6 +322,15 @@ class AppDatabase extends _$AppDatabase {
   Future<void> updateReminderStatus(String reminderId, String status) {
     return (update(reminders)..where((r) => r.id.equals(reminderId)))
         .write(RemindersCompanion(status: Value(status)));
+  }
+
+  /// Apaga TODOS os dados do usuário (veículos, histórico, lembretes) —
+  /// usado na exclusão de conta, exigência do Google Play. As categorias
+  /// (catálogo padrão do app) não são apagadas, já que não são dado pessoal.
+  Future<void> excluirTudoDoUsuario() async {
+    await delete(maintenanceEvents).go();
+    await delete(reminders).go();
+    await delete(vehicles).go();
   }
 }
 

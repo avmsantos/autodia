@@ -58,4 +58,32 @@ class AuthService extends GetxService {
     await _googleSignIn.signOut();
     await _firebaseAuth.signOut();
   }
+
+  /// Exclui a conta do Firebase Auth (exigência do Google Play pra apps que
+  /// permitem criar conta). Operações sensíveis como essa exigem login
+  /// "recente" — se o Firebase reclamar disso, refaz o login do Google e
+  /// tenta de novo, sem precisar pedir isso manualmente pro usuário toda vez.
+  Future<void> excluirConta() async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) return;
+
+    try {
+      await user.delete();
+    } on FirebaseAuthException catch (e) {
+      if (e.code != 'requires-recent-login') rethrow;
+
+      final googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) rethrow; // usuário cancelou o reauth
+
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      await user.reauthenticateWithCredential(credential);
+      await user.delete();
+    }
+
+    await _googleSignIn.signOut();
+  }
 }

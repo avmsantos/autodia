@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../data/local/app_database.dart';
+import '../core/calculations/maintenance_calculator.dart';
 import '../modules/home/home_controller.dart';
+import '../theme/app_colors.dart';
 import 'status_badge.dart';
 
 class VehicleCard extends StatelessWidget {
@@ -14,18 +15,35 @@ class VehicleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final vehicle = item.vehicle;
     final isMoto = vehicle.tipo == 'moto';
+    final isAtrasado =
+        item.mostUrgentResult?.status == MaintenanceStatus.atrasado;
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: isAtrasado
+              ? AppColors.error
+              : AppColors.outlineVariant.withOpacity(0.4),
+          width: isAtrasado ? 1.5 : 1,
+        ),
+      ),
       child: ListTile(
         onTap: onTap,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: CircleAvatar(
-          child: Icon(isMoto ? Icons.two_wheeler : Icons.directions_car),
+          backgroundColor: AppColors.vehicleIconBg,
+          child: Icon(
+            isMoto ? Icons.two_wheeler : Icons.directions_car,
+            color: AppColors.vehicleIcon,
+          ),
         ),
-        title: Text(vehicle.nome, style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text(
-          '${vehicle.placa ?? 'sem placa'} · ${vehicle.kmAtual} km',
+        title: Text(
+          vehicle.nome,
+          style: const TextStyle(fontWeight: FontWeight.w600),
         ),
+        subtitle: Text('${vehicle.placa ?? 'sem placa'} · ${vehicle.kmAtual} km'),
         trailing: StatusBadge(status: item.mostUrgentResult?.status),
       ),
     );

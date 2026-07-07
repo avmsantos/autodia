@@ -15,7 +15,10 @@ class AddEventController extends GetxController {
   final NotificationService _notificationService = Get.find<NotificationService>();
   final ImagePicker _imagePicker = ImagePicker();
   final _uuid = const Uuid();
+
   late Vehicle vehicle;
+  MaintenanceEvent? _editingEvent;
+  bool get isEditing => _editingEvent != null;
 
   final RxList<MaintenanceCategory> categorias = <MaintenanceCategory>[].obs;
   final Rx<MaintenanceCategory?> categoriaSelecionada =
@@ -33,15 +36,37 @@ class AddEventController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    vehicle = Get.arguments as Vehicle;
+    final args = Get.arguments as Map<String, dynamic>;
+    vehicle = args['vehicle'] as Vehicle;
+    _editingEvent = args['event'] as MaintenanceEvent?;
+
     kmController.text = vehicle.kmAtual.toString();
     _loadCategorias();
+
+    if (_editingEvent != null) {
+      final e = _editingEvent!;
+      data.value = e.dataRealizada;
+      kmController.text = (e.kmRealizado ?? vehicle.kmAtual).toString();
+      valorController.text = e.valorGasto?.toString() ?? '';
+      oficinaController.text = e.oficina ?? '';
+      observacaoController.text = e.observacao ?? '';
+      if (e.anexoPath != null) {
+        anexoSelecionado.value = File(e.anexoPath!);
+      }
+    }
   }
 
   Future<void> _loadCategorias() async {
     final list = await _db.categoriesForType(vehicle.tipo);
     categorias.assignAll(list);
-    if (list.isNotEmpty) categoriaSelecionada.value = list.first;
+
+    if (_editingEvent != null) {
+      categoriaSelecionada.value =
+          list.firstWhereOrNull((c) => c.id == _editingEvent!.categoriaId) ??
+              (list.isNotEmpty ? list.first : null);
+    } else if (list.isNotEmpty) {
+      categoriaSelecionada.value = list.first;
+    }
   }
 
   Future<void> escolherAnexoDaCamera() => _escolherAnexo(ImageSource.camera);
@@ -77,20 +102,38 @@ class AddEventController extends GetxController {
     isSaving.value = true;
     try {
       final km = int.tryParse(kmController.text);
-      await _db.insertEvent(
-        veiculoId: vehicle.id,
-        categoriaId: categoriaSelecionada.value!.id,
-        dataRealizada: data.value,
-        kmRealizado: km,
-        valorGasto: double.tryParse(valorController.text.replaceAll(',', '.')),
-        oficina: oficinaController.text.trim().isEmpty
-            ? null
-            : oficinaController.text.trim(),
-        observacao: observacaoController.text.trim().isEmpty
-            ? null
-            : observacaoController.text.trim(),
-        anexoPath: anexoSelecionado.value?.path,
-      );
+      final valorGasto = double.tryParse(valorController.text.replaceAll(',', '.'));
+      final oficina = oficinaController.text.trim().isEmpty
+          ? null
+          : oficinaController.text.trim();
+      final observacao = observacaoController.text.trim().isEmpty
+          ? null
+          : observacaoController.text.trim();
+      final anexoPath = anexoSelecionado.value?.path;
+
+      if (isEditing) {
+        await _db.updateEvent(
+          eventId: _editingEvent!.id,
+          categoriaId: categoriaSelecionada.value!.id,
+          dataRealizada: data.value,
+          kmRealizado: km,
+          valorGasto: valorGasto,
+          oficina: oficina,
+          observacao: observacao,
+          anexoPath: anexoPath,
+        );
+      } else {
+        await _db.insertEvent(
+          veiculoId: vehicle.id,
+          categoriaId: categoriaSelecionada.value!.id,
+          dataRealizada: data.value,
+          kmRealizado: km,
+          valorGasto: valorGasto,
+          oficina: oficina,
+          observacao: observacao,
+          anexoPath: anexoPath,
+        );
+      }
 
       // Se o km informado for maior que o atual do veículo, atualiza —
       // é o "sensor" mais confiável que o app tem: o próprio usuário
@@ -100,15 +143,22 @@ class AddEventController extends GetxController {
         vehicle = vehicle.copyWith(kmAtual: km, kmAtualizadoEm: DateTime.now());
       }
 
-      // Uma manutenção nova também muda o histórico usado na estimativa por
-      // km, e pode ter zerado a contagem de uma categoria — reagenda tudo
-      // pra manter a notificação alinhada com o cálculo mais recente.
+      // Uma manutenção nova/editada também muda o histórico usado na
+      // estimativa por km — reagenda tudo pra manter a notificação alinhada
+      // com o cálculo mais recente.
       await _notificationService.rescheduleAllForVehicle(_db, vehicle);
 
       Get.back();
     } finally {
       isSaving.value = false;
     }
+  }
+
+  Future<void> excluir() async {
+    if (_editingEvent == null) return;
+    await _db.deleteEvent(_editingEvent!.id);
+    await _notificationService.rescheduleAllForVehicle(_db, vehicle);
+    Get.back();
   }
 
   @override

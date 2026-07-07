@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../../core/calculations/maintenance_calculator.dart';
 import '../../core/services/battery_optimization_service.dart';
+import '../../core/services/notification_service.dart';
 import '../../core/services/purchase_service.dart';
 import '../../data/local/app_database.dart';
 
@@ -55,6 +56,14 @@ class HomeController extends GetxController {
   }
 
   void dispensarBannerBateria() => mostrarBannerBateria.value = false;
+
+  Future<void> alternarNotificacoes() async {
+    final notificationService = Get.find<NotificationService>();
+    await notificationService.alternarNotificacoes(
+      !notificationService.notificacoesAtivas.value,
+      _db,
+    );
+  }
 
   Future<void> _recompute() async {
     final results = <VehicleWithStatus>[];

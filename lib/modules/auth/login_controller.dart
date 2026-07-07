@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../../app/routes/app_routes.dart';
 import '../../core/services/auth_service.dart';
+import '../../widgets/app_snackbar.dart';
 
 class LoginController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
@@ -16,7 +17,10 @@ class LoginController extends GetxController {
       }
     } catch (e) {
       print('Erro ao entrar com Google: $e');
-      Get.snackbar('Erro ao entrar', 'Tente novamente em instantes. $e');
+      showErrorSnackbar(
+        title: 'Erro ao entrar',
+        message: 'Tente novamente em instantes. $e',
+      );
     } finally {
       isLoading.value = false;
     }
@@ -32,7 +36,10 @@ class LoginController extends GetxController {
       await _authService.signInAnonymously();
       Get.offAllNamed(AppRoutes.home);
     } catch (e) {
-      Get.snackbar('Erro', 'Não foi possível continuar sem login agora.');
+      showErrorSnackbar(
+        title: 'Erro',
+        message: 'Não foi possível continuar sem login agora.',
+      );
     } finally {
       isLoading.value = false;
     }

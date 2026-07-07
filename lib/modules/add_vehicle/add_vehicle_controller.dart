@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../data/local/app_database.dart';
 import '../../data/local/tables.dart';
+import '../../widgets/app_snackbar.dart';
 
 class AddVehicleController extends GetxController {
   final AppDatabase _db = Get.find<AppDatabase>();
@@ -33,7 +34,10 @@ class AddVehicleController extends GetxController {
 
   Future<void> salvar() async {
     if (nomeController.text.trim().isEmpty) {
-      Get.snackbar('Falta o nome', 'Dá um nome pro veículo (ex: "Onix 2020").');
+      showErrorSnackbar(
+        title: 'Falta o nome',
+        message: 'Dá um nome pro veículo (ex: "Onix 2020").',
+      );
       return;
     }
 

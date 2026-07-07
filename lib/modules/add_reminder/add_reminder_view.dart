@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
+import '../../theme/app_colors.dart';
 import 'add_reminder_controller.dart';
 
 class AddReminderView extends GetView<AddReminderController> {
@@ -11,13 +12,25 @@ class AddReminderView extends GetView<AddReminderController> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(controller.isEditing ? 'Editar lembrete' : 'Novo lembrete'),
+        title: Text(
+          controller.isEditing ? 'Editar lembrete' : 'Novo lembrete',
+          style: const TextStyle(fontWeight: FontWeight.w800),
+        ),
         actions: [
           if (controller.isEditing)
             IconButton(
               icon: const Icon(Icons.delete_outline),
               tooltip: 'Excluir',
               onPressed: () => _confirmarExclusao(context),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: AppColors.surfaceContainerHigh,
+                child: Icon(Icons.person_outline, color: AppColors.outline, size: 18),
+              ),
             ),
         ],
       ),
@@ -28,32 +41,45 @@ class AddReminderView extends GetView<AddReminderController> {
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            const _FieldLabel('Tipo de manutenção'),
             DropdownButtonFormField<String>(
               initialValue: controller.categoriaSelecionada.value?.id,
-              decoration: const InputDecoration(
-                labelText: 'Tipo de manutenção',
-                border: OutlineInputBorder(),
-              ),
               items: controller.categorias
                   .map((c) => DropdownMenuItem(value: c.id, child: Text(c.nome)))
                   .toList(),
               onChanged: controller.selecionarCategoria,
             ),
-            const SizedBox(height: 16),
-            if (controller.isCalendarCategory)
-              _CalendarFields(controller: controller)
-            else
-              _MechanicalFields(controller: controller),
-            const SizedBox(height: 24),
-            FilledButton(
-              onPressed: controller.isSaving.value ? null : controller.salvar,
-              child: controller.isSaving.value
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Salvar lembrete'),
+            const SizedBox(height: 20),
+            Obx(
+              () => controller.isCalendarCategory
+                  ? _CalendarFields(controller: controller)
+                  : _MechanicalFields(controller: controller),
+            ),
+            const SizedBox(height: 28),
+            Obx(
+              () => SizedBox(
+                height: 56,
+                child: FilledButton.icon(
+                  onPressed: controller.isSaving.value ? null : controller.salvar,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.onBackground,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: AppColors.onBackground.withOpacity(0.6),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  icon: controller.isSaving.value
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.save_outlined, size: 20),
+                  label: const Text(
+                    'Salvar lembrete',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                  ),
+                ),
+              ),
             ),
           ],
         );
@@ -73,6 +99,7 @@ class AddReminderView extends GetView<AddReminderController> {
             child: const Text('Cancelar'),
           ),
           FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Excluir'),
           ),
@@ -82,6 +109,22 @@ class AddReminderView extends GetView<AddReminderController> {
     if (confirmou == true) {
       await controller.excluir();
     }
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  final String text;
+  const _FieldLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6, left: 2),
+      child: Text(
+        text,
+        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.secondary),
+      ),
+    );
   }
 }
 
@@ -97,12 +140,9 @@ class _MechanicalFields extends StatelessWidget {
       () => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Última vez feita'),
-            subtitle:
-                Text(DateFormat('dd/MM/yyyy').format(controller.ultimaData.value)),
-            trailing: const Icon(Icons.calendar_today),
+          const _FieldLabel('Última vez feita'),
+          _DateBox(
+            date: controller.ultimaData.value,
             onTap: () async {
               final picked = await showDatePicker(
                 context: context,
@@ -113,57 +153,51 @@ class _MechanicalFields extends StatelessWidget {
               if (picked != null) controller.ultimaData.value = picked;
             },
           ),
+          const SizedBox(height: 18),
+          const _FieldLabel('Km na última vez (opcional)'),
           TextField(
             controller: controller.ultimoKmController,
-            decoration: const InputDecoration(
-              labelText: 'Km na última vez (opcional)',
-              border: OutlineInputBorder(),
-            ),
+            decoration: const InputDecoration(suffixText: 'KM'),
             keyboardType: TextInputType.number,
           ),
-          const Divider(height: 32),
-          Text('Repetir a cada:', style: Theme.of(context).textTheme.titleSmall),
-          const SizedBox(height: 8),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Por tempo'),
+          const SizedBox(height: 24),
+          const Divider(),
+          const SizedBox(height: 12),
+          const Text('Repetir a cada:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 14),
+
+          _ToggleCard(
+            icon: Icons.schedule,
+            title: 'Por tempo',
             value: controller.usarData.value,
             onChanged: (v) => controller.usarData.value = v,
+            child: controller.usarData.value
+                ? Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: _InlineField(
+                      label: 'Intervalo em meses',
+                      controller: controller.intervaloMesesController,
+                    ),
+                  )
+                : null,
           ),
-          if (controller.usarData.value)
-            TextField(
-              controller: controller.intervaloMesesController,
-              decoration: const InputDecoration(
-                labelText: 'Intervalo em meses',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.number,
-            ),
-          const SizedBox(height: 8),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Row(
-              children: [
-                const Text('Por quilometragem'),
-                if (!controller.isPremium) ...[
-                  const SizedBox(width: 6),
-                  const Icon(Icons.lock, size: 16, color: Colors.orange),
-                ],
-              ],
-            ),
-            subtitle: controller.isPremium ? null : const Text('Recurso Premium'),
+          const SizedBox(height: 12),
+          _ToggleCard(
+            icon: Icons.location_on_outlined,
+            title: 'Por quilometragem',
+            locked: !controller.isPremium,
             value: controller.usarKm.value,
             onChanged: controller.toggleUsarKm,
+            child: controller.usarKm.value
+                ? Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: _InlineField(
+                      label: 'Intervalo em km',
+                      controller: controller.intervaloKmController,
+                    ),
+                  )
+                : null,
           ),
-          if (controller.usarKm.value)
-            TextField(
-              controller: controller.intervaloKmController,
-              decoration: const InputDecoration(
-                labelText: 'Intervalo em km',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.number,
-            ),
         ],
       ),
     );
@@ -182,42 +216,52 @@ class _CalendarFields extends StatelessWidget {
       () => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          OutlinedButton.icon(
-            onPressed: controller.isScanning.value ? null : controller.escanearDocumento,
-            icon: controller.isScanning.value
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Icon(
-                    Icons.document_scanner_outlined,
-                    color: controller.isPremium ? null : Colors.orange,
+          InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: controller.isScanning.value ? null : controller.escanearDocumento,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                color: AppColors.planSelectedBg,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.secondary.withOpacity(0.3)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (controller.isScanning.value)
+                    const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  else
+                    Icon(Icons.document_scanner_outlined, color: AppColors.secondary, size: 20),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Escanear documento',
+                    style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.secondary),
                   ),
-            label: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('Escanear documento'),
-                if (!controller.isPremium) ...[
-                  const SizedBox(width: 6),
-                  const Icon(Icons.lock, size: 14, color: Colors.orange),
+                  if (!controller.isPremium) ...[
+                    const SizedBox(width: 6),
+                    const Icon(Icons.lock, size: 16, color: Colors.orange),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Text(
             'Tira foto do CRLV, boleto ou apólice e a data de vencimento é '
             'preenchida automaticamente.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
+            style: TextStyle(color: AppColors.onSurfaceVariant, fontSize: 13),
           ),
-          const SizedBox(height: 16),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Data de pagamento'),
-            subtitle:
-                Text(DateFormat('dd/MM/yyyy').format(controller.ultimaData.value)),
-            trailing: const Icon(Icons.calendar_today),
+          const SizedBox(height: 20),
+
+          const _FieldLabel('Data de pagamento'),
+          _DateBox(
+            date: controller.ultimaData.value,
             onTap: () async {
               final picked = await showDatePicker(
                 context: context,
@@ -228,13 +272,12 @@ class _CalendarFields extends StatelessWidget {
               if (picked != null) controller.ultimaData.value = picked;
             },
           ),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Data de vencimento'),
-            subtitle: Text(
-              DateFormat('dd/MM/yyyy').format(controller.dataVencimento.value),
-            ),
-            trailing: const Icon(Icons.event),
+          const SizedBox(height: 18),
+
+          const _FieldLabel('Data de vencimento'),
+          _DateBox(
+            icon: Icons.event,
+            date: controller.dataVencimento.value,
             onTap: () async {
               final picked = await showDatePicker(
                 context: context,
@@ -245,16 +288,118 @@ class _CalendarFields extends StatelessWidget {
               if (picked != null) controller.dataVencimento.value = picked;
             },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 18),
+
+          const _FieldLabel('Valor pago (opcional)'),
           TextField(
             controller: controller.valorPagoController,
-            decoration: const InputDecoration(
-              labelText: 'Valor pago (opcional)',
-              prefixText: 'R\$ ',
-              border: OutlineInputBorder(),
-            ),
+            decoration: const InputDecoration(prefixText: 'R\$ '),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DateBox extends StatelessWidget {
+  final DateTime date;
+  final VoidCallback onTap;
+  final IconData icon;
+
+  const _DateBox({required this.date, required this.onTap, this.icon = Icons.calendar_today_outlined});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: InputDecorator(
+        decoration: InputDecoration(suffixIcon: Icon(icon, size: 18)),
+        child: Text(DateFormat('dd/MM/yyyy').format(date)),
+      ),
+    );
+  }
+}
+
+class _InlineField extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+
+  const _InlineField({required this.label, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.secondary)),
+        const SizedBox(height: 6),
+        TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppColors.surfaceContainerLow,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ToggleCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final bool locked;
+  final Widget? child;
+
+  const _ToggleCard({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.onChanged,
+    this.locked = false,
+    this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.outlineVariant.withOpacity(0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: AppColors.secondary, size: 20),
+              const SizedBox(width: 10),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+              if (locked) ...[
+                const SizedBox(width: 6),
+                const Icon(Icons.lock, size: 15, color: Colors.orange),
+              ],
+              const Spacer(),
+              Switch(
+                value: value,
+                onChanged: onChanged,
+                activeThumbColor: Colors.white,
+                activeTrackColor: AppColors.secondary,
+              ),
+            ],
+          ),
+          if (child != null) child!,
         ],
       ),
     );

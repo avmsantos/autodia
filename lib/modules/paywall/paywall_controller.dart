@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import '../../core/services/purchase_service.dart';
+import '../../widgets/app_snackbar.dart';
 
 class PaywallController extends GetxController {
   final PurchaseService _purchaseService = Get.find<PurchaseService>();
@@ -34,12 +35,18 @@ class PaywallController extends GetxController {
       await _purchaseService.purchasePackage(package);
       if (_purchaseService.isPremium.value) {
         Get.back();
-        Get.snackbar('Premium ativado', 'Aproveite os recursos extras!');
+        showSuccessSnackbar(
+          title: 'Premium ativado',
+          message: 'Aproveite os recursos extras!',
+        );
       }
     } on PlatformException catch (e) {
       final errorCode = PurchasesErrorHelper.getErrorCode(e);
       if (errorCode != PurchasesErrorCode.purchaseCancelledError) {
-        Get.snackbar('Não foi possível concluir', 'Tente novamente.');
+        showErrorSnackbar(
+          title: 'Não foi possível concluir',
+          message: 'Tente novamente.',
+        );
       }
     } finally {
       isPurchasing.value = false;
@@ -51,9 +58,15 @@ class PaywallController extends GetxController {
     try {
       await _purchaseService.restorePurchases();
       if (_purchaseService.isPremium.value) {
-        Get.snackbar('Compra restaurada', 'Seu Premium foi reativado.');
+        showSuccessSnackbar(
+          title: 'Compra restaurada',
+          message: 'Seu Premium foi reativado.',
+        );
       } else {
-        Get.snackbar('Nada encontrado', 'Nenhuma compra anterior localizada.');
+        showInfoSnackbar(
+          title: 'Nada encontrado',
+          message: 'Nenhuma compra anterior localizada.',
+        );
       }
     } finally {
       isPurchasing.value = false;

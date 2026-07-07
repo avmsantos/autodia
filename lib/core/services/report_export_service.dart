@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 class ReportExportMonth {
@@ -40,6 +42,21 @@ class ReportExportService {
     return buffer.toString();
   }
 
+  Future<Directory> _downloadsDirectory() async {
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      final dirs = await getExternalStorageDirectories(type: StorageDirectory.downloads);
+      if (dirs == null || dirs.isEmpty) {
+        throw Exception('Não foi possível acessar a pasta Downloads.');
+      }
+      final downloads = dirs.first;
+      if (!downloads.existsSync()) {
+        await downloads.create(recursive: true);
+      }
+      return downloads;
+    }
+    return await getApplicationDocumentsDirectory();
+  }
+
   Future<File> exportCsv({
     required String vehicleName,
     required int year,
@@ -47,8 +64,11 @@ class ReportExportService {
     required List<ReportExportMonth> monthlyValues,
     required List<ReportExportCategory> categoryValues,
   }) async {
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File('${dir.path}/relatorio_${vehicleName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_')}_$year.csv');
+    final dir = await _downloadsDirectory();
+    final file = File(p.join(
+      dir.path,
+      'relatorio_${vehicleName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_')}_$year.csv',
+    ));
     final content = buildCsvContent(
       vehicleName: vehicleName,
       year: year,
@@ -59,3 +79,4 @@ class ReportExportService {
     return file.writeAsString(content, flush: true);
   }
 }
+

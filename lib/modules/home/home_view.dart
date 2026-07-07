@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../app/routes/app_routes.dart';
 import '../../core/services/notification_service.dart';
+import '../../theme/app_colors.dart';
 import '../../widgets/ad_banner_widget.dart';
 import '../../widgets/vehicle_card.dart';
 import 'home_controller.dart';
@@ -12,31 +13,41 @@ class HomeView extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext context) {
+    final notificationService = Get.find<NotificationService>();
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Meus veículos'),
+        leadingWidth: 56,
+        leading: const Padding(
+          padding: EdgeInsets.only(left: 16),
+          child: Icon(Icons.directions_car_outlined, color: AppColors.onBackground),
+        ),
+        title: const Text(
+          'Meus veículos',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
         actions: [
-          // TEMPORÁRIO — botão de debug pra testar notificação imediata.
-          // Remove depois que resolver o problema do agendamento.
-          IconButton(
-            icon: const Icon(Icons.notifications_active_outlined),
-            tooltip: 'Testar notificação',
-            onPressed: () =>
-                Get.find<NotificationService>().testarNotificacaoImediata(),
-          ),
-          IconButton(
-            icon: const Icon(Icons.person_outline),
-            tooltip: 'Perfil',
-            onPressed: () => Get.toNamed(AppRoutes.profile),
+          Obx(
+            () => IconButton(
+              icon: Icon(
+                notificationService.notificacoesAtivas.value
+                    ? Icons.notifications_active_outlined
+                    : Icons.notifications_off_outlined,
+              ),
+              tooltip: notificationService.notificacoesAtivas.value
+                  ? 'Configurar notificações'
+                  : 'Configurar notificações',
+              onPressed: () => Get.toNamed(AppRoutes.notificationSettings),
+            ),
           ),
           Obx(
             () => IconButton(
               icon: Icon(
-                Icons.workspace_premium,
-                color: controller.isPremium ? Colors.amber : null,
+                Icons.account_circle,
+                color: controller.isPremium ? AppColors.onBackground : null,
               ),
-              tooltip: 'Premium',
-              onPressed: () => Get.toNamed(AppRoutes.paywall),
+              tooltip: 'Perfil',
+              onPressed: () => Get.toNamed(AppRoutes.profile),
             ),
           ),
         ],
@@ -57,15 +68,18 @@ class HomeView extends GetView<HomeController> {
                 );
               }
               return ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 itemCount: controller.vehicles.length,
                 itemBuilder: (context, index) {
                   final item = controller.vehicles[index];
-                  return VehicleCard(
-                    item: item,
-                    onTap: () => Get.toNamed(
-                      AppRoutes.vehicleDetail,
-                      arguments: item.vehicle,
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: VehicleCard(
+                      item: item,
+                      onTap: () => Get.toNamed(
+                        AppRoutes.vehicleDetail,
+                        arguments: item.vehicle,
+                      ),
                     ),
                   );
                 },
@@ -80,6 +94,8 @@ class HomeView extends GetView<HomeController> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => Get.toNamed(AppRoutes.addVehicle),
+        backgroundColor: AppColors.onBackground,
+        foregroundColor: AppColors.onPrimary,
         child: const Icon(Icons.add),
       ),
     );
@@ -93,14 +109,19 @@ class _BatteryOptimizationBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-      color: Theme.of(context).colorScheme.tertiaryContainer,
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      color: AppColors.secondaryContainer,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide.none,
+      ),
+      elevation: 0,
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(14),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.battery_alert_outlined),
+            const Icon(Icons.battery_alert_outlined, color: AppColors.onSecondaryContainer),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -108,13 +129,16 @@ class _BatteryOptimizationBanner extends StatelessWidget {
                 children: [
                   const Text(
                     'Garanta que os lembretes cheguem',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.onSecondaryContainer,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   const Text(
                     'Alguns celulares (Xiaomi, Samsung e outros) fecham apps '
                     'em segundo plano e podem bloquear notificações.',
-                    style: TextStyle(fontSize: 12),
+                    style: TextStyle(fontSize: 12, color: AppColors.onSecondaryContainer),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -151,9 +175,12 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.directions_car_outlined, size: 64, color: Colors.grey),
+            const Icon(Icons.directions_car_outlined, size: 64, color: AppColors.outline),
             const SizedBox(height: 16),
-            const Text('Nenhum veículo cadastrado ainda'),
+            const Text(
+              'Nenhum veículo cadastrado ainda',
+              style: TextStyle(color: AppColors.onSurfaceVariant),
+            ),
             const SizedBox(height: 16),
             FilledButton.icon(
               onPressed: onAdd,

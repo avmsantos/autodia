@@ -15,6 +15,9 @@ dependencies:
   # Estado / navegação
   get: ^4.6.6
 
+  # icones svg
+  flutter_svg: ^2.2.1
+
   # Banco local
   drift: ^2.16.0
   sqlite3_flutter_libs: ^0.5.20
@@ -37,6 +40,9 @@ dependencies:
   image_picker: ^1.1.2
   uuid: ^4.4.0
 
+  # Preferência simples e persistente (ex: notificações ativas/desativadas)
+  shared_preferences: ^2.3.2
+
   # Notificações locais (lembretes de vencimento)
   flutter_local_notifications: ^18.0.1
   timezone: ^0.9.4
@@ -44,6 +50,12 @@ dependencies:
 
   # OCR de documento (leitura automática de data de vencimento)
   google_mlkit_text_recognition: ^0.13.0
+
+  pdf: ^3.11.1
+  printing: ^5.13.4
+  excel: ^4.0.6
+  share_plus: ^10.1.2
+  cross_file: ^0.3.4+2
 
   cupertino_icons: ^1.0.6
   collection: ^1.18.0
@@ -60,5 +72,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  # assets:
-  #   - assets/images/
+  assets:
+    - assets/images/google_logo.svg

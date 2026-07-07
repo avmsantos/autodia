@@ -18,10 +18,21 @@ class ReportView extends GetView<ReportController> {
       appBar: AppBar(
         title: Text('Gastos · ${controller.vehicle.nome}'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.download_outlined),
-            tooltip: 'Exportar relatório',
-            onPressed: controller.exportarRelatorio,
+          Obx(
+            () => controller.isExporting.value
+                ? const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.ios_share),
+                    tooltip: 'Exportar',
+                    onPressed: () => _mostrarOpcoesExportacao(context),
+                  ),
           ),
         ],
       ),
@@ -47,6 +58,34 @@ class ReportView extends GetView<ReportController> {
           ],
         );
       }),
+    );
+  }
+
+  Future<void> _mostrarOpcoesExportacao(BuildContext context) async {
+    await showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.picture_as_pdf_outlined),
+              title: const Text('Exportar como PDF'),
+              onTap: () {
+                Navigator.pop(context);
+                controller.exportarPdf();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.table_chart_outlined),
+              title: const Text('Exportar como Excel'),
+              onTap: () {
+                Navigator.pop(context);
+                controller.exportarExcel();
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -128,7 +167,7 @@ class _MonthlyBarChart extends StatelessWidget {
       return BarChart(
         BarChartData(
           maxY: maiorValor * 1.2,
-          barTouchData: const BarTouchData(enabled: true),
+          barTouchData: BarTouchData(enabled: true),
           titlesData: FlTitlesData(
             leftTitles: const AxisTitles(
               sideTitles: SideTitles(showTitles: false),

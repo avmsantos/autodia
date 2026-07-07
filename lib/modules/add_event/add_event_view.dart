@@ -1,9 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
+import '../../theme/app_colors.dart';
 import 'add_event_controller.dart';
 
 class AddEventView extends GetView<AddEventController> {
@@ -12,7 +11,20 @@ class AddEventView extends GetView<AddEventController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Registrar manutenção')),
+      appBar: AppBar(
+        title: Text(
+          controller.isEditing ? 'Editar manutenção' : 'Registrar manutenção',
+          style: const TextStyle(fontWeight: FontWeight.w800),
+        ),
+        actions: [
+          if (controller.isEditing)
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              tooltip: 'Excluir',
+              onPressed: () => _confirmarExclusao(context),
+            ),
+        ],
+      ),
       body: Obx(() {
         if (controller.categorias.isEmpty) {
           return const Center(child: CircularProgressIndicator());
@@ -20,12 +32,9 @@ class AddEventView extends GetView<AddEventController> {
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            const _FieldLabel('Tipo de Manutenção'),
             DropdownButtonFormField<String>(
-              value: controller.categoriaSelecionada.value?.id,
-              decoration: const InputDecoration(
-                labelText: 'Tipo de manutenção',
-                border: OutlineInputBorder(),
-              ),
+              initialValue: controller.categoriaSelecionada.value?.id,
               items: controller.categorias
                   .map((c) => DropdownMenuItem(value: c.id, child: Text(c.nome)))
                   .toList(),
@@ -34,12 +43,11 @@ class AddEventView extends GetView<AddEventController> {
                     controller.categorias.firstWhere((c) => c.id == id);
               },
             ),
-            const SizedBox(height: 16),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Data'),
-              subtitle: Text(DateFormat('dd/MM/yyyy').format(controller.data.value)),
-              trailing: const Icon(Icons.calendar_today),
+            const SizedBox(height: 18),
+
+            const _FieldLabel('Data'),
+            InkWell(
+              borderRadius: BorderRadius.circular(12),
               onTap: () async {
                 final picked = await showDatePicker(
                   context: context,
@@ -49,61 +57,115 @@ class AddEventView extends GetView<AddEventController> {
                 );
                 if (picked != null) controller.data.value = picked;
               },
+              child: InputDecorator(
+                decoration: const InputDecoration(
+                  suffixIcon: Icon(Icons.calendar_today_outlined, size: 18),
+                ),
+                child: Text(DateFormat('dd/MM/yyyy').format(controller.data.value)),
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 18),
+
+            const _FieldLabel('Km na Data'),
             TextField(
               controller: controller.kmController,
-              decoration: const InputDecoration(
-                labelText: 'Km na data',
-                border: OutlineInputBorder(),
-              ),
               keyboardType: TextInputType.number,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
+
+            const _FieldLabel('Valor Gasto (opcional)'),
             TextField(
               controller: controller.valorController,
-              decoration: const InputDecoration(
-                labelText: 'Valor gasto (opcional)',
-                prefixText: 'R\$ ',
-                border: OutlineInputBorder(),
-              ),
+              decoration: const InputDecoration(prefixText: 'R\$ '),
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
+
+            const _FieldLabel('Oficina (opcional)'),
             TextField(
               controller: controller.oficinaController,
-              decoration: const InputDecoration(
-                labelText: 'Oficina (opcional)',
-                border: OutlineInputBorder(),
-              ),
+              decoration: const InputDecoration(hintText: 'Nome da oficina', hintStyle: TextStyle(color: AppColors.onBackground, fontWeight: FontWeight.w400)),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
+
+            const _FieldLabel('Observação (opcional)'),
             TextField(
               controller: controller.observacaoController,
-              decoration: const InputDecoration(
-                labelText: 'Observação (opcional)',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 2,
+              decoration: const InputDecoration(hintText: 'Detalhes adicionais...', hintStyle: TextStyle(color: AppColors.onBackground, fontWeight: FontWeight.w400)),
+              maxLines: 3,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
+
             _AttachmentSection(controller: controller),
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
+
             Obx(
-              () => FilledButton(
-                onPressed: controller.isSaving.value ? null : controller.salvar,
-                child: controller.isSaving.value
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Salvar'),
+              () => SizedBox(
+                height: 56,
+                child: FilledButton(
+                  onPressed: controller.isSaving.value ? null : controller.salvar,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.onBackground,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: AppColors.onBackground.withValues(alpha: 0.6),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: controller.isSaving.value
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Salvar', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                ),
               ),
             ),
           ],
         );
       }),
+    );
+  }
+
+  Future<void> _confirmarExclusao(BuildContext context) async {
+    final confirmou = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Excluir manutenção?'),
+        content: const Text('Isso remove esse registro do histórico. Não dá pra desfazer.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+    if (confirmou == true) {
+      await controller.excluir();
+    }
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  final String text;
+  const _FieldLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6, left: 2),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: AppColors.onBackground,
+        ),
+      ),
     );
   }
 }
@@ -120,22 +182,39 @@ class _AttachmentSection extends StatelessWidget {
       final anexo = controller.anexoSelecionado.value;
 
       if (anexo == null) {
-        return OutlinedButton.icon(
-          onPressed: () => _mostrarOpcoes(context),
-          icon: const Icon(Icons.attach_file),
-          label: const Text('Anexar foto da nota fiscal (opcional)'),
+        return InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => _mostrarOpcoes(context),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.outlineVariant),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.attach_file, size: 18, color: AppColors.outline),
+                SizedBox(width: 8),
+                Text(
+                  'Anexar foto da nota fiscal (opcional)',
+                  style: TextStyle(color: AppColors.outline, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ),
         );
       }
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Nota fiscal anexada', style: Theme.of(context).textTheme.titleSmall),
-          const SizedBox(height: 8),
+          const _FieldLabel('Nota fiscal anexada'),
           Stack(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(14),
                 child: Image.file(
                   anexo,
                   height: 160,
@@ -144,8 +223,8 @@ class _AttachmentSection extends StatelessWidget {
                 ),
               ),
               Positioned(
-                top: 4,
-                right: 4,
+                top: 8,
+                right: 8,
                 child: CircleAvatar(
                   backgroundColor: Colors.black54,
                   radius: 16,
