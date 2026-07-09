@@ -1,14 +1,13 @@
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/services/interstitial_ad_service.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/ocr_service.dart';
 import '../../core/services/purchase_service.dart';
 import '../../data/local/app_database.dart';
 import '../../data/local/tables.dart';
-import '../../widgets/app_snackbar.dart';
 
 class AddReminderController extends GetxController {
   final AppDatabase _db = Get.find<AppDatabase>();
@@ -117,14 +116,14 @@ class AddReminderController extends GetxController {
       final dataEncontrada = await _ocrService.extractDueDateFromImage(foto.path);
       if (dataEncontrada != null) {
         dataVencimento.value = dataEncontrada;
-        showSuccessSnackbar(
-          title: 'Data encontrada',
-          message: 'Confira se ${_formatarData(dataEncontrada)} está certo antes de salvar.',
+        Get.snackbar(
+          'Data encontrada',
+          'Confira se ${_formatarData(dataEncontrada)} está certo antes de salvar.',
         );
       } else {
-        showErrorSnackbar(
-          title: 'Não encontrei a data',
-          message: 'Preenche manualmente — a leitura automática não conseguiu identificar.',
+        Get.snackbar(
+          'Não encontrei a data',
+          'Preenche manualmente — a leitura automática não conseguiu identificar.',
         );
       }
     } finally {
@@ -147,10 +146,7 @@ class AddReminderController extends GetxController {
 
   Future<void> salvar() async {
     if (categoriaSelecionada.value == null) {
-      showErrorSnackbar(
-        title: 'Falta a categoria',
-        message: 'Escolha o tipo de manutenção.',
-      );
+      Get.snackbar('Falta a categoria', 'Escolha o tipo de manutenção.');
       return;
     }
 
@@ -183,6 +179,7 @@ class AddReminderController extends GetxController {
       }
       await _notificationService.rescheduleAllForVehicle(_db, vehicle);
       Get.back();
+      Get.find<InterstitialAdService>().talvezMostrar();
     } finally {
       isSaving.value = false;
     }
@@ -190,10 +187,7 @@ class AddReminderController extends GetxController {
 
   Future<void> _salvarMecanica() async {
     if (!usarData.value && !usarKm.value) {
-      showErrorSnackbar(
-        title: 'Falta o gatilho',
-        message: 'Escolha ao menos data ou km.',
-      );
+      Get.snackbar('Falta o gatilho', 'Escolha ao menos data ou km.');
       return;
     }
 
@@ -223,6 +217,7 @@ class AddReminderController extends GetxController {
       }
       await _notificationService.rescheduleAllForVehicle(_db, vehicle);
       Get.back();
+      Get.find<InterstitialAdService>().talvezMostrar();
     } finally {
       isSaving.value = false;
     }

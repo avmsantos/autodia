@@ -8,6 +8,7 @@ import 'app/routes/app_pages.dart';
 import 'app/routes/app_routes.dart';
 import 'core/services/auth_service.dart';
 import 'core/services/battery_optimization_service.dart';
+import 'core/services/interstitial_ad_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/purchase_service.dart';
 import 'data/local/app_database.dart';
@@ -42,6 +43,10 @@ Future<void> main() async {
     androidApiKey: 'goog_DXifUvEqFMkgNaKWEpSTOBzDQdU',
   );
   Get.put(purchaseService, permanent: true);
+
+  final interstitialAdService = InterstitialAdService();
+  await interstitialAdService.init();
+  Get.put(interstitialAdService, permanent: true);
 
   // AuthService depende do PurchaseService já estar registrado (ver
   // _onAuthStateChanged em auth_service.dart), por isso vem depois.

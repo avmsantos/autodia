@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -59,18 +60,17 @@ class ProfileController extends GetxController {
     }
   }
 
-  Future<void> enviarEmailSuporte() async {
-    final uri = Uri(
-      scheme: 'mailto',
-      path: _emailSuporte,
-      query: 'subject=${Uri.encodeComponent('Suporte AutoDia')}',
-    );
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    } else {
+  Future<void> copiarEmailSuporte() async {
+    try {
+      await Clipboard.setData(const ClipboardData(text: _emailSuporte));
+      showSuccessSnackbar(
+        title: 'E-mail copiado',
+        message: 'O endereço de suporte foi copiado para a área de transferência.',
+      );
+    } catch (_) {
       showErrorSnackbar(
-        title: 'Não foi possível abrir o e-mail',
-        message: 'Envie manualmente para $_emailSuporte',
+        title: 'Não foi possível copiar',
+        message: 'Tente novamente em instantes.',
       );
     }
   }

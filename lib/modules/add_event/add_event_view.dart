@@ -29,98 +29,107 @@ class AddEventView extends GetView<AddEventController> {
         if (controller.categorias.isEmpty) {
           return const Center(child: CircularProgressIndicator());
         }
-        return ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            const _FieldLabel('Tipo de Manutenção'),
-            DropdownButtonFormField<String>(
-              initialValue: controller.categoriaSelecionada.value?.id,
-              items: controller.categorias
-                  .map((c) => DropdownMenuItem(value: c.id, child: Text(c.nome)))
-                  .toList(),
-              onChanged: (id) {
-                controller.categoriaSelecionada.value =
-                    controller.categorias.firstWhere((c) => c.id == id);
-              },
-            ),
-            const SizedBox(height: 18),
-
-            const _FieldLabel('Data'),
-            InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () async {
-                final picked = await showDatePicker(
-                  context: context,
-                  initialDate: controller.data.value,
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime.now(),
-                );
-                if (picked != null) controller.data.value = picked;
-              },
-              child: InputDecorator(
-                decoration: const InputDecoration(
-                  suffixIcon: Icon(Icons.calendar_today_outlined, size: 18),
-                ),
-                child: Text(DateFormat('dd/MM/yyyy').format(controller.data.value)),
+        return SafeArea(
+          top: false,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+            children: [
+              const _FieldLabel('Tipo de Manutenção'),
+              DropdownButtonFormField<String>(
+                initialValue: controller.categoriaSelecionada.value?.id,
+                items: controller.categorias
+                    .map((c) => DropdownMenuItem(value: c.id, child: Text(c.nome)))
+                    .toList(),
+                onChanged: (id) {
+                  controller.categoriaSelecionada.value =
+                      controller.categorias.firstWhere((c) => c.id == id);
+                },
               ),
-            ),
-            const SizedBox(height: 18),
+              const SizedBox(height: 18),
 
-            const _FieldLabel('Km na Data'),
-            TextField(
-              controller: controller.kmController,
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 18),
-
-            const _FieldLabel('Valor Gasto (opcional)'),
-            TextField(
-              controller: controller.valorController,
-              decoration: const InputDecoration(prefixText: 'R\$ '),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            ),
-            const SizedBox(height: 18),
-
-            const _FieldLabel('Oficina (opcional)'),
-            TextField(
-              controller: controller.oficinaController,
-              decoration: const InputDecoration(hintText: 'Nome da oficina', hintStyle: TextStyle(color: AppColors.onBackground, fontWeight: FontWeight.w400)),
-            ),
-            const SizedBox(height: 18),
-
-            const _FieldLabel('Observação (opcional)'),
-            TextField(
-              controller: controller.observacaoController,
-              decoration: const InputDecoration(hintText: 'Detalhes adicionais...', hintStyle: TextStyle(color: AppColors.onBackground, fontWeight: FontWeight.w400)),
-              maxLines: 3,
-            ),
-            const SizedBox(height: 20),
-
-            _AttachmentSection(controller: controller),
-            const SizedBox(height: 28),
-
-            Obx(
-              () => SizedBox(
-                height: 56,
-                child: FilledButton(
-                  onPressed: controller.isSaving.value ? null : controller.salvar,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.onBackground,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: AppColors.onBackground.withValues(alpha: 0.6),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              const _FieldLabel('Data'),
+              InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: controller.data.value,
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime.now(),
+                  );
+                  if (picked != null) controller.data.value = picked;
+                },
+                child: InputDecorator(
+                  decoration: const InputDecoration(
+                    suffixIcon: Icon(Icons.calendar_today_outlined, size: 18),
                   ),
-                  child: controller.isSaving.value
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Text('Salvar', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                  child: Text(DateFormat('dd/MM/yyyy').format(controller.data.value)),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 18),
+
+              const _FieldLabel('Km na Data'),
+              TextField(
+                controller: controller.kmController,
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 18),
+
+              const _FieldLabel('Valor Gasto (opcional)'),
+              TextField(
+                controller: controller.valorController,
+                decoration: const InputDecoration(prefixText: 'R\$ '),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              ),
+              const SizedBox(height: 18),
+
+              const _FieldLabel('Oficina (opcional)'),
+              TextField(
+                controller: controller.oficinaController,
+                decoration: const InputDecoration(
+                  hintText: 'Nome da oficina',
+                  hintStyle: TextStyle(color: AppColors.onBackground, fontWeight: FontWeight.w400),
+                ),
+              ),
+              const SizedBox(height: 18),
+
+              const _FieldLabel('Observação (opcional)'),
+              TextField(
+                controller: controller.observacaoController,
+                decoration: const InputDecoration(
+                  hintText: 'Detalhes adicionais...',
+                  hintStyle: TextStyle(color: AppColors.onBackground, fontWeight: FontWeight.w400),
+                ),
+                maxLines: 3,
+              ),
+              const SizedBox(height: 20),
+
+              _AttachmentSection(controller: controller),
+              const SizedBox(height: 28),
+
+              Obx(
+                () => SizedBox(
+                  height: 56,
+                  child: FilledButton(
+                    onPressed: controller.isSaving.value ? null : controller.salvar,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.onBackground,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: AppColors.onBackground.withValues(alpha: 0.6),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: controller.isSaving.value
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Text('Salvar', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                  ),
+                ),
+              ),
+            ],
+          ),
         );
       }),
     );

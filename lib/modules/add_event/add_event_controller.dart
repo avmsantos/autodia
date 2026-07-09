@@ -7,8 +7,10 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../core/services/interstitial_ad_service.dart';
 import '../../core/services/notification_service.dart';
 import '../../data/local/app_database.dart';
+import '../../widgets/app_snackbar.dart';
 
 class AddEventController extends GetxController {
   final AppDatabase _db = Get.find<AppDatabase>();
@@ -95,7 +97,10 @@ class AddEventController extends GetxController {
 
   Future<void> salvar() async {
     if (categoriaSelecionada.value == null) {
-      Get.snackbar('Falta a categoria', 'Escolha o tipo de manutenção.');
+      showErrorSnackbar(
+        title: 'Falta a categoria',
+        message: 'Escolha o tipo de manutenção.',
+      );
       return;
     }
 
@@ -149,6 +154,7 @@ class AddEventController extends GetxController {
       await _notificationService.rescheduleAllForVehicle(_db, vehicle);
 
       Get.back();
+      Get.find<InterstitialAdService>().talvezMostrar();
     } finally {
       isSaving.value = false;
     }

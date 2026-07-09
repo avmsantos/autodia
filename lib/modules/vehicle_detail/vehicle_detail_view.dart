@@ -5,7 +5,9 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../app/routes/app_routes.dart';
+import '../../core/services/purchase_service.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/ad_banner_widget.dart';
 import '../../widgets/status_badge.dart';
 import 'vehicle_detail_controller.dart';
 
@@ -58,10 +60,22 @@ class VehicleDetailView extends GetView<VehicleDetailController> {
             ),
           ),
         ),
-        body: const TabBarView(
+        body: Column(
           children: [
-            _RemindersTabContent(),
-            _HistoryTabContent(),
+            const Expanded(
+              child: TabBarView(
+                children: [
+                  _RemindersTabContent(),
+                  _HistoryTabContent(),
+                ],
+              ),
+            ),
+            Obx(() {
+              final isPremium = Get.find<PurchaseService>().isPremium.value;
+              return isPremium
+                  ? const SizedBox.shrink()
+                  : const SafeArea(top: false, child: AdBannerWidget());
+            }),
           ],
         ),
         floatingActionButton: Builder(builder: (context) {
@@ -336,18 +350,13 @@ class _HistoryTabContent extends GetView<VehicleDetailController> {
   Widget build(BuildContext context) {
     return Obx(() {
       if (controller.events.isEmpty) {
-        return _EmptyTabState(
+        return const _EmptyTabState(
           icon: Icons.history_rounded,
           title: 'Sem registros',
           description:
               'Nenhuma manutenção registrada ainda. Adicione sua primeira '
               'atividade para começar a monitorar o ciclo de vida do seu '
               'veículo.',
-          actionLabel: '+ Novo Registro',
-          onAction: () => Get.toNamed(
-            AppRoutes.addEvent,
-            arguments: {'vehicle': controller.vehicle},
-          ),
         );
       }
 

@@ -23,15 +23,7 @@ class AddReminderView extends GetView<AddReminderController> {
               tooltip: 'Excluir',
               onPressed: () => _confirmarExclusao(context),
             )
-          else
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: CircleAvatar(
-                radius: 18,
-                backgroundColor: AppColors.surfaceContainerHigh,
-                child: Icon(Icons.person_outline, color: AppColors.outline, size: 18),
-              ),
-            ),
+          
         ],
       ),
       body: Obx(() {
@@ -41,7 +33,7 @@ class AddReminderView extends GetView<AddReminderController> {
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            const _FieldLabel('Tipo de manutenção'),
+            const _FieldLabel('Tipo de Manutenção'),
             DropdownButtonFormField<String>(
               initialValue: controller.categoriaSelecionada.value?.id,
               items: controller.categorias
@@ -64,7 +56,7 @@ class AddReminderView extends GetView<AddReminderController> {
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.onBackground,
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor: AppColors.onBackground.withOpacity(0.6),
+                    disabledBackgroundColor: AppColors.onBackground.withValues(alpha: 0.6),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                   icon: controller.isSaving.value
@@ -122,7 +114,7 @@ class _FieldLabel extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 6, left: 2),
       child: Text(
         text,
-        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.secondary),
+        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.onBackground),
       ),
     );
   }
@@ -225,7 +217,7 @@ class _CalendarFields extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.planSelectedBg,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.secondary.withOpacity(0.3)),
+                border: Border.all(color: AppColors.secondary.withValues(alpha: 0.3)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -237,11 +229,11 @@ class _CalendarFields extends StatelessWidget {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   else
-                    Icon(Icons.document_scanner_outlined, color: AppColors.secondary, size: 20),
+                    const Icon(Icons.document_scanner_outlined, color: AppColors.onSecondaryContainer, size: 20),
                   const SizedBox(width: 10),
-                  Text(
+                 const Text(
                     'Escanear documento',
-                    style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.secondary),
+                    style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.onSecondaryContainer),
                   ),
                   if (!controller.isPremium) ...[
                     const SizedBox(width: 6),
@@ -252,14 +244,14 @@ class _CalendarFields extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
+          const Text(
             'Tira foto do CRLV, boleto ou apólice e a data de vencimento é '
             'preenchida automaticamente.',
             style: TextStyle(color: AppColors.onSurfaceVariant, fontSize: 13),
           ),
           const SizedBox(height: 20),
 
-          const _FieldLabel('Data de pagamento'),
+          const _FieldLabel('Data de Pagamento'),
           _DateBox(
             date: controller.ultimaData.value,
             onTap: () async {
@@ -274,7 +266,7 @@ class _CalendarFields extends StatelessWidget {
           ),
           const SizedBox(height: 18),
 
-          const _FieldLabel('Data de vencimento'),
+          const _FieldLabel('Data de Vencimento'),
           _DateBox(
             icon: Icons.event,
             date: controller.dataVencimento.value,
@@ -290,7 +282,7 @@ class _CalendarFields extends StatelessWidget {
           ),
           const SizedBox(height: 18),
 
-          const _FieldLabel('Valor pago (opcional)'),
+          const _FieldLabel('Valor Pago (opcional)'),
           TextField(
             controller: controller.valorPagoController,
             decoration: const InputDecoration(prefixText: 'R\$ '),
@@ -333,7 +325,7 @@ class _InlineField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.secondary)),
+        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.onBackground)),
         const SizedBox(height: 6),
         TextField(
           controller: controller,
@@ -376,14 +368,14 @@ class _ToggleCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.outlineVariant.withOpacity(0.4)),
+        border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, color: AppColors.secondary, size: 20),
+              Icon(icon, color: AppColors.onSecondaryContainer, size: 20),
               const SizedBox(width: 10),
               Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
               if (locked) ...[
@@ -395,7 +387,7 @@ class _ToggleCard extends StatelessWidget {
                 value: value,
                 onChanged: onChanged,
                 activeThumbColor: Colors.white,
-                activeTrackColor: AppColors.secondary,
+                activeTrackColor: AppColors.onSecondaryContainer,
               ),
             ],
           ),

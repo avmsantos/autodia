@@ -53,7 +53,7 @@ class _NaoLogado extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             TextButton.icon(
-              onPressed: controller.enviarEmailSuporte,
+              onPressed: controller.copiarEmailSuporte,
               icon: const Icon(Icons.help_outline),
               label: const Text('Central de ajuda'),
             ),
@@ -157,7 +157,7 @@ class _Logado extends StatelessWidget {
           icon: Icons.help_outline,
           title: 'Falar com o suporte',
           subtitle: 'avmtechlab@gmail.com',
-          onTap: controller.enviarEmailSuporte,
+          onTap: controller.copiarEmailSuporte,
         ),
         const SizedBox(height: 10),
         _HelpTile(
@@ -167,9 +167,9 @@ class _Logado extends StatelessWidget {
         ),
         const SizedBox(height: 24),
 
-        // Zona de risco
+        // Gerenciamento da Conta
         const Text(
-          'ZONA DE RISCO',
+          'OPÇÕES DA CONTA',
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
@@ -375,7 +375,7 @@ class _FreeCard extends StatelessWidget {
               color: AppColors.freeCardIconBg,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.shield_outlined, color: AppColors.outline, size: 20),
+            child: const Icon(Icons.gpp_good_outlined, color: AppColors.outline, size: 20),
           ),
           const SizedBox(width: 12),
           const Expanded(
@@ -497,7 +497,7 @@ class _DangerTile extends StatelessWidget {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               else
-               const Icon(Icons.chevron_right, color: AppColors.dangerBorder),
+               const Icon(Icons.chevron_right, color: AppColors.error),
             ],
           ),
         ),

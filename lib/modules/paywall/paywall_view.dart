@@ -34,127 +34,130 @@ class PaywallView extends GetView<PaywallController> {
 
         final packages = controller.offering.value?.availablePackages ?? [];
 
-        return ListView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-          children: [
-            // Hero
-            Center(
-              child: Column(
-                children: [
-                  Container(
-                    width: 112,
-                    height: 112,
-                    decoration: const BoxDecoration(
-                      color: AppColors.premiumHeroBg,
-                      shape: BoxShape.circle,
+        return SafeArea(
+          top: false,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+            children: [
+              // Hero
+              Center(
+                child: Column(
+                  children: [
+                    Container(
+                      width: 112,
+                      height: 112,
+                      decoration: const BoxDecoration(
+                        color: AppColors.premiumHeroBg,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.workspace_premium,
+                        size: 56,
+                        color: AppColors.premiumHeroIcon,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.workspace_premium,
-                      size: 56,
-                      color: AppColors.premiumHeroIcon,
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Vantagens do Premium',
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.onBackground),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Vantagens do Premium',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.onBackground),
-                  ),
-                  const SizedBox(height: 8),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8),
-                    child: Text(
-                      'Eleve a gestão do seu veículo a um nível profissional '
-                      'com recursos exclusivos de precisão técnica.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: AppColors.onSurfaceVariant, height: 1.4, fontWeight: FontWeight.w500),
+                    const SizedBox(height: 8),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: Text(
+                        'Eleve a gestão do seu veículo a um nível profissional '
+                        'com recursos exclusivos de precisão técnica.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: AppColors.onSurfaceVariant, height: 1.4, fontWeight: FontWeight.w500),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 28),
+              const SizedBox(height: 28),
 
-            // Benefícios
-            const _BenefitCard(
-              icon: Icons.block,
-              title: 'Sem anúncios',
-              description: 'Foco total na manutenção sem interrupções visuais.',
-            ),
-            const SizedBox(height: 12),
-            const _BenefitCard(
-              icon: Icons.speed,
-              title: 'Lembrete por quilometragem rodada',
-              description: 'Alertas precisos baseados no desgaste real do seu motor.',
-            ),
-            const SizedBox(height: 12),
-            const _BenefitCard(
-              icon: Icons.document_scanner_outlined,
-              title: 'Leitura automática (OCR)',
-              description: 'Digitalize faturas e documentos em segundos via câmera.',
-            ),
-            const SizedBox(height: 12),
-            const _BenefitCard(
-              icon: Icons.bar_chart,
-              title: 'Relatório de gastos',
-              description: 'Análise técnica detalhada da economia do seu veículo.',
-            ),
-            const SizedBox(height: 28),
+              // Benefícios
+              const _BenefitCard(
+                icon: Icons.block,
+                title: 'Sem anúncios',
+                description: 'Foco total na manutenção sem interrupções visuais.',
+              ),
+              const SizedBox(height: 12),
+              const _BenefitCard(
+                icon: Icons.speed,
+                title: 'Lembrete por quilometragem rodada',
+                description: 'Alertas precisos baseados no desgaste real do seu motor.',
+              ),
+              const SizedBox(height: 12),
+              const _BenefitCard(
+                icon: Icons.document_scanner_outlined,
+                title: 'Leitura automática (OCR)',
+                description: 'Digitalize faturas e documentos em segundos via câmera.',
+              ),
+              const SizedBox(height: 12),
+              const _BenefitCard(
+                icon: Icons.bar_chart,
+                title: 'Relatório de gastos',
+                description: 'Análise técnica detalhada da economia do seu veículo.',
+              ),
+              const SizedBox(height: 28),
 
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 4),
-              child: Text(
-                'ESCOLHA SEU PLANO',
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  'ESCOLHA SEU PLANO',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1,
+                    color: AppColors.onBackground,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              if (packages.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    'Nenhum plano disponível no momento.',
+                    style: TextStyle(color: AppColors.onSurfaceVariant),
+                  ),
+                )
+              else
+                Obx(
+                  () => _PlansSection(
+                    packages: packages,
+                    isPurchasing: controller.isPurchasing.value,
+                    onConfirm: controller.comprar,
+                  ),
+                ),
+
+              const SizedBox(height: 8),
+              Center(
+                child: Obx(
+                  () => TextButton(
+                    onPressed: controller.isPurchasing.value ? null : controller.restaurar,
+                    style: TextButton.styleFrom(foregroundColor: AppColors.onBackground),
+                    child: const Text(
+                      'Restaurar compra anterior',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Assinaturas renovadas automaticamente. Cancele quando quiser '
+                'nas configurações da loja.',
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1,
-                  color: AppColors.onBackground,
+                  color: AppColors.outline,
                 ),
               ),
-            ),
-            const SizedBox(height: 10),
-
-            if (packages.isEmpty)
-             const Padding(
-                padding:  EdgeInsets.symmetric(vertical: 12),
-                child: Text(
-                  'Nenhum plano disponível no momento.',
-                  style: TextStyle(color: AppColors.onSurfaceVariant),
-                ),
-              )
-            else
-              Obx(
-                () => _PlansSection(
-                  packages: packages,
-                  isPurchasing: controller.isPurchasing.value,
-                  onConfirm: controller.comprar,
-                ),
-              ),
-
-            const SizedBox(height: 8),
-            Center(
-              child: Obx(
-                () => TextButton(
-                  onPressed: controller.isPurchasing.value ? null : controller.restaurar,
-                  style: TextButton.styleFrom(foregroundColor: AppColors.onBackground),
-                  child: const Text(
-                    'Restaurar compra anterior',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-           const Text(
-              'Assinaturas renovadas automaticamente. Cancele quando quiser '
-              'nas configurações da loja.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.outline,
-              ),
-            ),
-          ],
+            ],
+          ),
         );
       }),
     );

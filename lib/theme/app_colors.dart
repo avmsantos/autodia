@@ -17,7 +17,7 @@ class AppColors {
   static const Color secondary = Color(0xFF39B8FD);
   static const Color secondaryContainer = Color(0xFFC9E6FF);
   static const Color onSecondaryContainer = Color(0xFF004666);
-
+  
   // ---------------------------------------------------------------------
   // Superfícies / fundo
   // ---------------------------------------------------------------------
