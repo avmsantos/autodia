@@ -2,16 +2,6 @@ import 'package:autodia/theme/app_text_style.dart';
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
-/// ThemeData central do app.
-///
-/// Uso no main.dart (GetMaterialApp):
-///
-/// ```dart
-/// GetMaterialApp(
-///   theme: AppTheme.light,
-///   // ...resto igual, nada de lógica muda.
-/// )
-/// ```
 class AppTheme {
   AppTheme._();
 
@@ -46,22 +36,21 @@ class AppTheme {
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.onBackground,
-        surfaceTintColor: Colors.transparent, // evita o "tingimento" amarelado que o Material 3 aplica em superfícies elevadas
+        surfaceTintColor: Colors.transparent,
         elevation: 1,
         scrolledUnderElevation: 2,
-        shadowColor: Colors.black.withOpacity(0.08),
+        shadowColor: Colors.black.withValues(alpha: 0.08),
         titleTextStyle: AppTextStyles.headlineMd.copyWith(fontWeight: FontWeight.w800),
         centerTitle: false,
       ),
 
       cardTheme: CardThemeData(
         color: AppColors.surface,
-        surfaceTintColor: Colors.transparent, // idem: cards não devem ganhar tom amarelado/esverdeado
-        elevation: 0,
+        surfaceTintColor: Colors.transparent,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: AppColors.outlineVariant.withOpacity(0.4)),
+          side: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.4)),
         ),
       ),
 
@@ -100,11 +89,11 @@ class AppTheme {
         fillColor: AppColors.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.outline),
+          borderSide: const BorderSide(color: AppColors.outline),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.outline),
+          borderSide:const BorderSide(color: AppColors.outline),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -113,7 +102,7 @@ class AppTheme {
       ),
 
       dividerTheme: DividerThemeData(
-        color: AppColors.outlineVariant.withOpacity(0.5),
+        color: AppColors.outlineVariant.withValues(alpha: 0.5),
         thickness: 1,
       ),
 

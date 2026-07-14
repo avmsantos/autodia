@@ -49,7 +49,7 @@ class LoginView extends GetView<LoginController> {
               const Text(
                 'Controle seu carro e moto: revisões, vencimentos e gastos, '
                 'tudo em um só lugar.',
-                style: TextStyle(color: AppColors.onSurfaceVariant, height: 1.4, fontSize: 15),
+                style: TextStyle(color: AppColors.onSurfaceVariant, height: 1.4, fontSize: 15, fontWeight: FontWeight.w500),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 40),
@@ -81,7 +81,7 @@ class LoginView extends GetView<LoginController> {
                 () => TextButton(
                   onPressed:
                       controller.isLoading.value ? null : controller.continuarSemLogin,
-                  style: TextButton.styleFrom(foregroundColor: AppColors.secondary),
+                  style: TextButton.styleFrom(foregroundColor: AppColors.primary),
                   child: const Text(
                     'Continuar sem login',
                     style: TextStyle(fontWeight: FontWeight.w700),

@@ -169,23 +169,17 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return const Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.directions_car_outlined, size: 64, color: AppColors.outline),
-            const SizedBox(height: 16),
-            const Text(
+             Icon(Icons.directions_car_outlined, size: 64, color: AppColors.onBackground),
+             SizedBox(height: 16),
+             Text(
               'Nenhum veículo cadastrado ainda',
               style: TextStyle(color: AppColors.onSurfaceVariant),
-            ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: onAdd,
-              icon: const Icon(Icons.add),
-              label: const Text('Cadastrar veículo'),
             ),
           ],
         ),

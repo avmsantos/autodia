@@ -1,5 +1,13 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:cross_file/cross_file.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/routes/app_routes.dart';
@@ -15,10 +23,10 @@ class ProfileController extends GetxController {
 
   final RxBool isLoading = false.obs;
   final RxBool isDeletingAccount = false.obs;
+  final RxBool isBackupBusy = false.obs;
 
   static const _emailSuporte = 'avmtechlab@gmail.com';
 
-  // TROQUE pela URL real depois de publicar a página no Firebase Hosting.
   static const _urlPoliticaETermos = 'https://autodia-974dd.web.app';
 
   bool get isLoggedIn => _authService.isLoggedIn;
@@ -108,6 +116,78 @@ class ProfileController extends GetxController {
       );
     } finally {
       isDeletingAccount.value = false;
+    }
+  }
+
+  /// Exporta todos os dados locais (veículos, categorias customizadas,
+  /// histórico, lembretes) num arquivo .json e abre o menu de compartilhar.
+  /// Não inclui as fotos anexadas — só o caminho, que só existe nesse
+  /// aparelho (colocar imagem em base64 deixaria o arquivo gigante).
+  Future<void> exportarBackup() async {
+    isBackupBusy.value = true;
+    try {
+      final db = Get.find<AppDatabase>();
+      final dados = await db.exportarBackup();
+      final jsonStr = const JsonEncoder.withIndent('  ').convert(dados);
+
+      final tempDir = await getTemporaryDirectory();
+      final dataFormatada = DateTime.now().toIso8601String().split('T').first;
+      final file = File(p.join(tempDir.path, 'autodia_backup_$dataFormatada.json'));
+      await file.writeAsString(jsonStr);
+
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          text: 'Backup do AutoDia — guarde esse arquivo pra restaurar depois.',
+        ),
+      );
+    } catch (_) {
+      showErrorSnackbar(
+        title: 'Não foi possível exportar',
+        message: 'Tente novamente em instantes.',
+      );
+    } finally {
+      isBackupBusy.value = false;
+    }
+  }
+
+  /// Escolhe um arquivo .json de backup e SUBSTITUI os dados atuais pelos
+  /// dele. Quem chama isso já deve ter confirmado com o usuário antes — a
+  /// confirmação em si fica na view, aqui só executa.
+  Future<void> restaurarBackup() async {
+    final resultado = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['json'],
+    );
+    final caminho = resultado?.files.single.path;
+    if (caminho == null) return; // cancelou a seleção
+
+    isBackupBusy.value = true;
+    try {
+      final conteudo = await File(caminho).readAsString();
+      final dados = jsonDecode(conteudo) as Map<String, dynamic>;
+
+      final db = Get.find<AppDatabase>();
+      await db.restaurarBackup(dados);
+
+      // Reagenda notificações de todos os veículos restaurados.
+      final notificationService = Get.find<NotificationService>();
+      final veiculos = await db.watchAllVehicles();
+      for (final v in veiculos) {
+        await notificationService.rescheduleAllForVehicle(db, v);
+      }
+
+      showSuccessSnackbar(
+        title: 'Backup restaurado',
+        message: 'Seus dados foram atualizados.',
+      );
+    } catch (_) {
+      showErrorSnackbar(
+        title: 'Não foi possível restaurar',
+        message: 'Confira se o arquivo é um backup válido do AutoDia.',
+      );
+    } finally {
+      isBackupBusy.value = false;
     }
   }
 }

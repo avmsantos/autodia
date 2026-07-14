@@ -24,8 +24,6 @@ class AppColors {
   static const Color background = Color(0xFFF7F9FB);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceContainerLow = Color(0xFFF2F4F6);
-  static const Color surfaceContainer = Color(0xFFECEEF0);
-  static const Color surfaceContainerHigh = Color(0xFFE6E8EA);
   static const Color outline = Color(0xFF76777D);
   static const Color outlineVariant = Color(0xFFC6C6CD);
 
@@ -47,23 +45,6 @@ class AppColors {
   static const Color successContainer = Color(0xFFDDF6E8);
   static const Color onSuccessContainer = Color(0xFF0A4C27);
 
-  // ---------------------------------------------------------------------
-  // Cores semânticas de status (chips de lembrete na lista de veículos)
-  // ---------------------------------------------------------------------
-  static const Color statusEmDia = Color(0xFF2E7D32);
-  static const Color statusEmDiaBg = Color(0xFFD9F2DD);
-
-  static const Color statusProximo = Color(0xFFB26A00);
-  static const Color statusProximoBg = Color(0xFFFFEBC8);
-
-  static const Color statusAtrasado = Color(0xFFC62828);
-  static const Color statusAtrasadoBg = Color(0xFFFBDCDA);
-
-  static const Color statusManutencao = Color(0xFFC62828);
-  static const Color statusManutencaoBg = Color(0xFFFBDCDA);
-
-  static const Color statusSemLembrete = Color(0xFF757575);
-  static const Color statusSemLembreteBg = Color(0xFFE6E6E6);
 
   // ---------------------------------------------------------------------
   // Ícones de tipo de veículo (avatar circular na lista)

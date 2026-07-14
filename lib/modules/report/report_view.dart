@@ -47,7 +47,17 @@ class ReportView extends GetView<ReportController> {
             _YearSelector(controller: controller),
             const SizedBox(height: 16),
             _TotalCard(controller: controller),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+            Obx(() {
+              final texto = controller.insight.value;
+              return texto == null
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: _InsightCard(texto: texto),
+                    );
+            }),
+            const SizedBox(height: 8),
             Text('Gasto por mês', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             SizedBox(height: 200, child: _MonthlyBarChart(controller: controller)),
@@ -90,6 +100,60 @@ class ReportView extends GetView<ReportController> {
   }
 }
 
+/// Card de destaque quando o app detecta um aumento relevante de gasto numa
+/// categoria (>=15% em relação à média) — ver `_gerarInsight` no controller.
+/// Não é geração de texto por IA (sem custo, sem internet), é matemática
+/// simples em cima dos dados que já existem; o rótulo "Insight" comunica
+/// a ideia de "o app percebeu algo", que é exatamente o que está acontecendo.
+class _InsightCard extends StatelessWidget {
+  final String texto;
+  const _InsightCard({required this.texto});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF161B22),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.white70),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.lightbulb_outline, size: 14, color: Colors.white),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'INSIGHT',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            texto,
+            style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.4),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _YearSelector extends StatelessWidget {
   final ReportController controller;
   const _YearSelector({required this.controller});
@@ -98,7 +162,7 @@ class _YearSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(
       () => DropdownButtonFormField<int>(
-        value: controller.anoSelecionado.value,
+        initialValue: controller.anoSelecionado.value,
         decoration: const InputDecoration(
           labelText: 'Ano',
           border: OutlineInputBorder(),
@@ -167,7 +231,7 @@ class _MonthlyBarChart extends StatelessWidget {
       return BarChart(
         BarChartData(
           maxY: maiorValor * 1.2,
-          barTouchData: BarTouchData(enabled: true),
+          barTouchData: const BarTouchData(enabled: true),
           titlesData: FlTitlesData(
             leftTitles: const AxisTitles(
               sideTitles: SideTitles(showTitles: false),

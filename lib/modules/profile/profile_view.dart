@@ -62,6 +62,40 @@ class _NaoLogado extends StatelessWidget {
               icon: const Icon(Icons.description_outlined),
               label: const Text('Política de privacidade e termos'),
             ),
+            const SizedBox(height: 24),
+            Divider(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
+            const SizedBox(height: 16),
+            const Text(
+              'BACKUP',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1,
+                color: AppColors.outline,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Obx(
+              () => _HelpTile(
+                icon: Icons.upload_file_outlined,
+                title: 'Exportar backup',
+                subtitle: 'Salva um arquivo com todos os seus dados',
+                onTap: controller.isBackupBusy.value ? () {} : controller.exportarBackup,
+                isLoading: controller.isBackupBusy.value,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Obx(
+              () => _HelpTile(
+                icon: Icons.download_outlined,
+                title: 'Restaurar backup',
+                subtitle: 'Substitui os dados atuais pelos do arquivo',
+                onTap: controller.isBackupBusy.value
+                    ? () {}
+                    : () => _confirmarRestauracao(context, controller),
+                isLoading: controller.isBackupBusy.value,
+              ),
+            ),
           ],
         ),
       ),
@@ -139,6 +173,42 @@ class _Logado extends StatelessWidget {
           label: const Text('Sair da conta'),
         ),
         const SizedBox(height: 28),
+        Divider(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
+        const SizedBox(height: 20),
+
+        // Backup
+        const Text(
+          'BACKUP',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1,
+            color: AppColors.outline,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Obx(
+          () => _HelpTile(
+            icon: Icons.upload_file_outlined,
+            title: 'Exportar backup',
+            subtitle: 'Salva um arquivo com todos os seus dados',
+            onTap: controller.isBackupBusy.value ? () {} : controller.exportarBackup,
+            isLoading: controller.isBackupBusy.value,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Obx(
+          () => _HelpTile(
+            icon: Icons.download_outlined,
+            title: 'Restaurar backup',
+            subtitle: 'Substitui os dados atuais pelos do arquivo',
+            onTap: controller.isBackupBusy.value
+                ? () {}
+                : () => _confirmarRestauracao(context, controller),
+            isLoading: controller.isBackupBusy.value,
+          ),
+        ),
+        const SizedBox(height: 24),
         Divider(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
         const SizedBox(height: 20),
 
@@ -220,12 +290,43 @@ class _Logado extends StatelessWidget {
   }
 }
 
-/// Alerta de exclusão de conta com fundo desfocado (BackdropFilter) em vez
-/// do overlay escuro padrão do Flutter — só aparência, a chamada real de
-/// exclusão continua em `controller.excluirConta()`.
-class _DeleteAccountDialog extends StatelessWidget {
-  const _DeleteAccountDialog();
-
+/// Confirmação de restaurar backup — dialog simples (não o com blur, esse
+/// fica reservado pra exclusão de conta, a ação mais grave do app).
+Future<void> _confirmarRestauracao(BuildContext context, ProfileController controller) async {
+  final confirmou = await showGeneralDialog<bool>(
+    context: context,
+    barrierLabel: 'Restaurar backup',
+    barrierDismissible: true,
+    barrierColor: Colors.black.withValues(alpha: 0.15),
+    transitionDuration: const Duration(milliseconds: 220),
+    pageBuilder: (context, anim1, anim2) => const SizedBox.shrink(),
+    transitionBuilder: (context, anim1, anim2, _) {
+      final blur = 6 * anim1.value;
+      return BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        child: FadeTransition(
+          opacity: anim1,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.94, end: 1).animate(
+              CurvedAnimation(parent: anim1, curve: Curves.easeOut),
+            ),
+            child: const _RestoreBackupDialog(),
+          ),
+        ),
+      );
+    },
+  );
+  if (confirmou == true) {
+    await controller.restaurarBackup();
+  }
+}
+ 
+/// Alerta de restauração de backup com fundo desfocado (mesmo tratamento do
+/// alerta de exclusão de conta) — só aparência, a chamada real continua em
+/// `controller.restaurarBackup()`.
+class _RestoreBackupDialog extends StatelessWidget {
+  const _RestoreBackupDialog();
+ 
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -252,11 +353,103 @@ class _DeleteAccountDialog extends StatelessWidget {
                 Container(
                   width: 56,
                   height: 56,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
+                    color: AppColors.planSelectedBg,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.settings_backup_restore, color: AppColors.secondary, size: 28),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Restaurar backup?',
+                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                const Text.rich(
+                  TextSpan(
+                    style: TextStyle(color: AppColors.onSurfaceVariant, fontSize: 14, height: 1.4),
+                    children: [
+                      TextSpan(
+                        text: 'Isso substitui TODOS os veículos, histórico e lembretes '
+                            'atuais pelos dados do arquivo escolhido. ',
+                      ),
+                      TextSpan(
+                        text: 'Não dá pra desfazer.',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: FilledButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.onBackground,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: const Text(
+                      'Escolher arquivo e restaurar',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  style: TextButton.styleFrom(foregroundColor: AppColors.onBackground),
+                  child: const Text('Cancelar', style: TextStyle(fontWeight: FontWeight.w700)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Alerta de exclusão de conta com fundo desfocado (BackdropFilter) em vez
+/// do overlay escuro padrão do Flutter — só aparência, a chamada real de
+/// exclusão continua em `controller.excluirConta()`.
+class _DeleteAccountDialog extends StatelessWidget {
+  const _DeleteAccountDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 28),
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 24,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: const BoxDecoration(
                     color: AppColors.dangerBorder,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 28),
+                  child: const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 28),
                 ),
                 const SizedBox(height: 16),
                 const Text(
@@ -265,10 +458,10 @@ class _DeleteAccountDialog extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 10),
-                Text.rich(
+                const Text.rich(
                   TextSpan(
                     style: TextStyle(color: AppColors.onSurfaceVariant, fontSize: 14, height: 1.4),
-                    children: const [
+                    children: [
                       TextSpan(
                         text: 'Isso apaga permanentemente seus veículos, histórico de '
                             'manutenção, lembretes e sua conta. ',
@@ -300,7 +493,7 @@ class _DeleteAccountDialog extends StatelessWidget {
                 const SizedBox(height: 4),
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  style: TextButton.styleFrom(foregroundColor: AppColors.secondary),
+                  style: TextButton.styleFrom(foregroundColor: AppColors.onBackground),
                   child: const Text('Cancelar', style: TextStyle(fontWeight: FontWeight.w700)),
                 ),
               ],
@@ -400,12 +593,14 @@ class _HelpTile extends StatelessWidget {
   final String title;
   final String? subtitle;
   final VoidCallback onTap;
+  final bool isLoading;
 
   const _HelpTile({
     required this.icon,
     required this.title,
     required this.onTap,
     this.subtitle,
+    this.isLoading = false,
   });
 
   @override
@@ -441,7 +636,14 @@ class _HelpTile extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: AppColors.outlineVariant),
+              if (isLoading)
+                const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                const Icon(Icons.chevron_right, color: AppColors.outlineVariant),
             ],
           ),
         ),

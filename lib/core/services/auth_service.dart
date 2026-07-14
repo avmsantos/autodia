@@ -18,8 +18,19 @@ class AuthService extends GetxService {
 
   bool get isLoggedIn => currentUser.value != null;
 
+  /// Diferente de `isLoggedIn`: "Continuar sem login" também cria um usuário
+  /// no Firebase (anônimo), então `isLoggedIn` sozinho não serve pra saber
+  /// se a pessoa tem uma conta Google de verdade vinculada.
+  bool get isGoogleLinked =>
+      currentUser.value != null && !currentUser.value!.isAnonymous;
+
   Future<AuthService> init() async {
-    currentUser.value = _firebaseAuth.currentUser;
+    try {
+      currentUser.value = await _firebaseAuth.authStateChanges().first;
+    } catch (_) {
+      currentUser.value = _firebaseAuth.currentUser;
+    }
+
     _firebaseAuth.authStateChanges().listen(_onAuthStateChanged);
     return this;
   }

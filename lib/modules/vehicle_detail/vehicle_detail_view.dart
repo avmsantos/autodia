@@ -474,9 +474,7 @@ class _EmptyTabState extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.description,
-    this.actionLabel,
-    this.onAction,
-  });
+  }) : actionLabel = null, onAction = null;
 
   @override
   Widget build(BuildContext context) {

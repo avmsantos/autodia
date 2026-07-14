@@ -36,10 +36,24 @@ class ReportController extends GetxController {
   final RxList<GastoMensal> gastoPorMes = <GastoMensal>[].obs;
   final RxList<GastoCategoria> gastoPorCategoria = <GastoCategoria>[].obs;
 
+  /// Texto do card "Insight" — null quando não há dado suficiente pra gerar
+  /// nada relevante (evita mostrar insight forçado/sem sentido).
+  final Rx<String?> insight = Rx<String?>(null);
+
   static const _mesesNomes = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
   ];
+
+  /// Sugestão complementar por categoria — puramente cosmético, dá contexto
+  /// prático ao insight em vez de só o número. Categoria sem entrada aqui
+  /// cai no fallback genérico em [_sugestaoPara].
+  static const _sugestoesPorCategoria = {
+    'Abastecimento': 'Considere uma revisão nos filtros de ar para melhorar a eficiência.',
+    'Troca de óleo': 'Vale conferir se o intervalo entre trocas está sendo respeitado.',
+    'Troca de pneu': 'Confira o alinhamento — desgaste irregular encarece a troca.',
+    'Pastilha/lona de freio': 'Um freio gasto demais pode indicar necessidade de revisão do sistema.',
+  };
 
   List<MaintenanceEvent> _todosEventos = [];
   List<Reminder> _todosPagamentos = [];
@@ -86,19 +100,24 @@ class ReportController extends GetxController {
     final porMes = List<double>.filled(12, 0);
     final porCategoria = <String, double>{};
 
-    for (final e in eventosDoAno) {
-      final valor = e.valorGasto ?? 0;
+    // Categoria -> mês(1-12) -> valor. Granularidade extra só usada pelo
+    // cálculo do insight, não pelos outros cards da tela.
+    final porCategoriaPorMes = <String, List<double>>{};
+
+    void registrar(String categoriaId, int mes, double valor) {
       total += valor;
-      porMes[e.dataRealizada.month - 1] += valor;
-      final nome = _categoriaNomes[e.categoriaId] ?? 'Outros';
+      porMes[mes - 1] += valor;
+      final nome = _categoriaNomes[categoriaId] ?? 'Outros';
       porCategoria[nome] = (porCategoria[nome] ?? 0) + valor;
+      porCategoriaPorMes.putIfAbsent(nome, () => List.filled(12, 0));
+      porCategoriaPorMes[nome]![mes - 1] += valor;
+    }
+
+    for (final e in eventosDoAno) {
+      registrar(e.categoriaId, e.dataRealizada.month, e.valorGasto ?? 0);
     }
     for (final r in pagamentosDoAno) {
-      final valor = r.valorPago ?? 0;
-      total += valor;
-      porMes[r.ultimaDataFeita.month - 1] += valor;
-      final nome = _categoriaNomes[r.categoriaId] ?? 'Outros';
-      porCategoria[nome] = (porCategoria[nome] ?? 0) + valor;
+      registrar(r.categoriaId, r.ultimaDataFeita.month, r.valorPago ?? 0);
     }
 
     totalAno.value = total;
@@ -111,6 +130,61 @@ class ReportController extends GetxController {
         .toList()
       ..sort((a, b) => b.valor.compareTo(a.valor));
     gastoPorCategoria.assignAll(listaCategoria);
+
+    _gerarInsight(porCategoriaPorMes);
+  }
+
+  /// Compara o mês mais recente com gasto, em cada categoria, contra a média
+  /// dos outros meses da mesma categoria nesse ano. Mostra só a categoria com
+  /// o desvio mais expressivo (%), e só se passar de um limiar mínimo — pra
+  /// não gerar "insight" de ruído estatístico com pouco dado.
+  void _gerarInsight(Map<String, List<double>> porCategoriaPorMes) {
+    String? melhorCategoria;
+    double melhorVariacao = 0;
+
+    porCategoriaPorMes.forEach((categoria, valoresPorMes) {
+      final mesesComDado = <int>[];
+      for (var i = 0; i < 12; i++) {
+        if (valoresPorMes[i] > 0) mesesComDado.add(i);
+      }
+      // Precisa de pelo menos 2 meses com gasto pra ter "média" com sentido.
+      if (mesesComDado.length < 2) return;
+
+      final mesMaisRecente = mesesComDado.last;
+      final valorMesAtual = valoresPorMes[mesMaisRecente];
+
+      final mesesAnteriores = mesesComDado.sublist(0, mesesComDado.length - 1);
+      final mediaAnterior =
+          mesesAnteriores.map((m) => valoresPorMes[m]).reduce((a, b) => a + b) /
+              mesesAnteriores.length;
+
+      if (mediaAnterior <= 0) return;
+
+      final variacao = (valorMesAtual - mediaAnterior) / mediaAnterior;
+
+      // Só considera aumento relevante (>=15%) — quedas não viram alerta aqui,
+      // o objetivo é chamar atenção pra gasto crescendo, não elogiar economia.
+      if (variacao >= 0.15 && variacao > melhorVariacao) {
+        melhorVariacao = variacao;
+        melhorCategoria = categoria;
+      }
+    });
+
+    if (melhorCategoria == null) {
+      insight.value = null;
+      return;
+    }
+
+    final percentual = (melhorVariacao * 100).round();
+    final sugestao = _sugestaoPara(melhorCategoria!);
+    insight.value =
+        'Seus gastos com ${melhorCategoria!.toLowerCase()} aumentaram $percentual% '
+        'neste mês em comparação à média. $sugestao';
+  }
+
+  String _sugestaoPara(String categoria) {
+    return _sugestoesPorCategoria[categoria] ??
+        'Vale ficar de olho nesse gasto nos próximos meses.';
   }
 
   String get _nomeArquivoBase =>

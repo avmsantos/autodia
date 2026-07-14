@@ -175,9 +175,7 @@ MaintenanceResult calculateMaintenanceStatus(MaintenanceInput input) {
       break;
   }
 
-  final daysRemaining = effectiveDueDate != null
-      ? effectiveDueDate.difference(input.today).inDays
-      : null;
+  final daysRemaining = effectiveDueDate?.difference(input.today).inDays;
 
   final status = _resolveStatus(
     daysRemaining: daysRemaining,

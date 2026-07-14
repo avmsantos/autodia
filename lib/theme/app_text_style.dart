@@ -1,14 +1,6 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
-/// Estilos de texto centralizados.
-///
-/// Nota: o layout de referência usa as fontes "Hanken Grotesk" (títulos) e
-/// "Manrope" (corpo de texto). Se quiser usá-las de verdade no app, adicione
-/// o pacote `google_fonts` e troque `fontFamily: null` por, por exemplo,
-/// `GoogleFonts.hankenGrotesk(...)` / `GoogleFonts.manrope(...)`.
-/// Sem isso, o app usa a fonte padrão do sistema — o layout continua
-/// funcionando normalmente.
 class AppTextStyles {
   AppTextStyles._();
 
@@ -54,7 +46,6 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
     letterSpacing: 0.4,
   );
-
   /// Usado dentro dos chips de status (Em dia / Atrasado / Próximo etc.)
   static const TextStyle statusChip = TextStyle(
     fontSize: 12,

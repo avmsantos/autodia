@@ -21,9 +21,16 @@ import '../../modules/report/report_view.dart';
 import '../../modules/vehicle_detail/vehicle_detail_binding.dart';
 import '../../modules/vehicle_detail/vehicle_detail_view.dart';
 import 'app_routes.dart';
+import '../../modules/splash/splash_binding.dart';
+import '../../modules/splash/splash_view.dart';
 
 class AppPages {
   static final pages = [
+    GetPage(
+      name: AppRoutes.splash,
+      page: () => const SplashView(),
+      binding: SplashBinding(),
+    ),
     GetPage(
       name: AppRoutes.login,
       page: () => const LoginView(),

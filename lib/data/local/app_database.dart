@@ -17,7 +17,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -40,6 +40,16 @@ class AppDatabase extends _$AppDatabase {
               ),
             );
           }
+          if (from < 3) {
+            // Categoria de combustível não existia — necessária pro relatório
+            // de gastos e pros insights conseguirem falar sobre abastecimento.
+            final jaExiste = await (select(maintenanceCategories)
+                  ..where((c) => c.nome.equals('Abastecimento')))
+                .getSingleOrNull();
+            if (jaExiste == null) {
+              await into(maintenanceCategories).insert(_cat('Abastecimento', 'ambos', 'local_gas_station'));
+            }
+          }
         },
       );
 
@@ -52,8 +62,13 @@ class AppDatabase extends _$AppDatabase {
   /// Observa um único veículo — usado na tela de detalhe pra refletir
   /// edições (nome, placa, km) feitas em qualquer lugar do app, sem precisar
   /// sair e voltar da tela pra ver a mudança.
-  Stream<Vehicle> watchVehicleById(String id) {
-    return (select(vehicles)..where((v) => v.id.equals(id))).watchSingle();
+  ///
+  /// Usa `watchSingleOrNull` (não `watchSingle`) de propósito: quando o
+  /// veículo é excluído, a linha desaparece e `watchSingle` quebraria o
+  /// stream com um erro não tratado, já que ele exige sempre exatamente
+  /// uma linha.
+  Stream<Vehicle?> watchVehicleById(String id) {
+    return (select(vehicles)..where((v) => v.id.equals(id))).watchSingleOrNull();
   }
 
   Future<String> insertVehicle({
@@ -129,6 +144,7 @@ class AppDatabase extends _$AppDatabase {
       _cat('Revisão geral', 'ambos', 'build'),
       _cat('Troca de pneu', 'ambos', 'tire_repair'),
       _cat('Pastilha/lona de freio', 'ambos', 'disc_full'),
+      _cat('Abastecimento', 'ambos', 'local_gas_station'),
       // ambos — documento/calendário
       _cat('IPVA', 'ambos', 'receipt_long',
           tipo: CategoryCalculationType.calendario),
@@ -331,6 +347,148 @@ class AppDatabase extends _$AppDatabase {
     await delete(maintenanceEvents).go();
     await delete(reminders).go();
     await delete(vehicles).go();
+  }
+
+  // ---------- Backup / Restauração ----------
+  //
+  // Formato simples de arquivo (JSON), pensado pra dar pra restaurar em
+  // outro aparelho ou depois de reinstalar. NÃO inclui o arquivo das fotos
+  // anexadas (só o caminho) — se o aparelho for outro, as fotos não vêm
+  // junto, só o resto dos dados. Botar a imagem em base64 no JSON deixaria
+  // o arquivo gigante pra pouco ganho prático.
+
+  static const _versaoBackup = 1;
+
+  Future<Map<String, dynamic>> exportarBackup() async {
+    final veiculos = await select(vehicles).get();
+    final categoriasCustomizadas =
+        await (select(maintenanceCategories)..where((c) => c.customizada.equals(true)))
+            .get();
+    final eventos = await select(maintenanceEvents).get();
+    final todosLembretes = await select(reminders).get();
+
+    return {
+      'versao': _versaoBackup,
+      'exportadoEm': DateTime.now().toIso8601String(),
+      'veiculos': veiculos.map((v) => {
+            'id': v.id,
+            'tipo': v.tipo,
+            'nome': v.nome,
+            'placa': v.placa,
+            'fotoPath': v.fotoPath,
+            'kmAtual': v.kmAtual,
+            'kmAtualizadoEm': v.kmAtualizadoEm.toIso8601String(),
+            'criadoEm': v.criadoEm.toIso8601String(),
+          }).toList(),
+      'categoriasCustomizadas': categoriasCustomizadas.map((c) => {
+            'id': c.id,
+            'nome': c.nome,
+            'veiculoTipoAplicavel': c.veiculoTipoAplicavel,
+            'icone': c.icone,
+            'tipoCalculo': c.tipoCalculo,
+          }).toList(),
+      'eventos': eventos.map((e) => {
+            'id': e.id,
+            'veiculoId': e.veiculoId,
+            'categoriaId': e.categoriaId,
+            'dataRealizada': e.dataRealizada.toIso8601String(),
+            'kmRealizado': e.kmRealizado,
+            'valorGasto': e.valorGasto,
+            'oficina': e.oficina,
+            'observacao': e.observacao,
+            'anexoPath': e.anexoPath,
+            'criadoEm': e.criadoEm.toIso8601String(),
+          }).toList(),
+      'lembretes': todosLembretes.map((r) => {
+            'id': r.id,
+            'veiculoId': r.veiculoId,
+            'categoriaId': r.categoriaId,
+            'ultimaDataFeita': r.ultimaDataFeita.toIso8601String(),
+            'ultimoKmFeito': r.ultimoKmFeito,
+            'intervaloMeses': r.intervaloMeses,
+            'intervaloKm': r.intervaloKm,
+            'dataVencimentoManual': r.dataVencimentoManual?.toIso8601String(),
+            'valorPago': r.valorPago,
+            'ativo': r.ativo,
+            'criadoEm': r.criadoEm.toIso8601String(),
+          }).toList(),
+    };
+  }
+
+  /// Restaura um backup — SUBSTITUI os dados atuais (não faz merge). Quem
+  /// chama isso já deve ter confirmado com o usuário antes, é destrutivo.
+  Future<void> restaurarBackup(Map<String, dynamic> dados) async {
+    await transaction(() async {
+      // Limpa dados atuais (mas não as categorias padrão do app).
+      await delete(maintenanceEvents).go();
+      await delete(reminders).go();
+      await delete(vehicles).go();
+      await (delete(maintenanceCategories)..where((c) => c.customizada.equals(true))).go();
+
+      for (final c in (dados['categoriasCustomizadas'] as List)) {
+        await into(maintenanceCategories).insert(
+          MaintenanceCategoriesCompanion.insert(
+            id: c['id'],
+            nome: c['nome'],
+            veiculoTipoAplicavel: c['veiculoTipoAplicavel'],
+            icone: Value(c['icone']),
+            customizada: const Value(true),
+            tipoCalculo: Value(c['tipoCalculo']),
+          ),
+        );
+      }
+
+      for (final v in (dados['veiculos'] as List)) {
+        await into(vehicles).insert(
+          VehiclesCompanion.insert(
+            id: v['id'],
+            tipo: v['tipo'],
+            nome: v['nome'],
+            placa: Value(v['placa']),
+            fotoPath: Value(v['fotoPath']),
+            kmAtual: Value(v['kmAtual'] ?? 0),
+            kmAtualizadoEm: Value(DateTime.parse(v['kmAtualizadoEm'])),
+          ),
+        );
+      }
+
+      for (final e in (dados['eventos'] as List)) {
+        await into(maintenanceEvents).insert(
+          MaintenanceEventsCompanion.insert(
+            id: e['id'],
+            veiculoId: e['veiculoId'],
+            categoriaId: e['categoriaId'],
+            dataRealizada: DateTime.parse(e['dataRealizada']),
+            kmRealizado: Value(e['kmRealizado']),
+            valorGasto: Value((e['valorGasto'] as num?)?.toDouble()),
+            oficina: Value(e['oficina']),
+            observacao: Value(e['observacao']),
+            anexoPath: Value(e['anexoPath']),
+          ),
+        );
+      }
+
+      for (final r in (dados['lembretes'] as List)) {
+        await into(reminders).insert(
+          RemindersCompanion.insert(
+            id: r['id'],
+            veiculoId: r['veiculoId'],
+            categoriaId: r['categoriaId'],
+            ultimaDataFeita: DateTime.parse(r['ultimaDataFeita']),
+            ultimoKmFeito: Value(r['ultimoKmFeito']),
+            intervaloMeses: Value(r['intervaloMeses']),
+            intervaloKm: Value(r['intervaloKm']),
+            dataVencimentoManual: Value(
+              r['dataVencimentoManual'] != null
+                  ? DateTime.parse(r['dataVencimentoManual'])
+                  : null,
+            ),
+            valorPago: Value((r['valorPago'] as num?)?.toDouble()),
+            ativo: Value(r['ativo'] ?? true),
+          ),
+        );
+      }
+    });
   }
 }
 

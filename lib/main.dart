@@ -1,4 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
@@ -23,10 +25,20 @@ Future<void> main() async {
   // initializeApp() de novo aqui pode disparar "duplicate-app" mesmo sendo
   // a primeira vez do lado Dart — isso é inofensivo, só ignoramos.
   try {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
   } on FirebaseException catch (e) {
     if (e.code != 'duplicate-app') rethrow;
   }
+
+  await FirebaseCrashlytics.instance
+      .setCrashlyticsCollectionEnabled(!kDebugMode);
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true;
+  };
+
   await MobileAds.instance.initialize();
 
   // Banco local (drift) fica disponível pro app inteiro via GetX.
@@ -53,16 +65,14 @@ Future<void> main() async {
   final authService = await AuthService().init();
   Get.put(authService, permanent: true);
 
-  runApp(const MotoCarroApp());
+  runApp(const AutoDiaApp());
 }
 
-class MotoCarroApp extends StatelessWidget {
-  const MotoCarroApp({super.key});
+class AutoDiaApp extends StatelessWidget {
+  const AutoDiaApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final authService = Get.find<AuthService>();
-
     return GetMaterialApp(
       title: 'Manutenção Veicular',
       debugShowCheckedModeBanner: false,
@@ -78,7 +88,7 @@ class MotoCarroApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      initialRoute: authService.isLoggedIn ? AppRoutes.home : AppRoutes.login,
+      initialRoute: AppRoutes.splash,
       getPages: AppPages.pages,
     );
   }

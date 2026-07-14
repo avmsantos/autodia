@@ -181,14 +181,52 @@ class _MechanicalFields extends StatelessWidget {
             value: controller.usarKm.value,
             onChanged: controller.toggleUsarKm,
             child: controller.usarKm.value
-                ? Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: _InlineField(
-                      label: 'Intervalo em km',
-                      controller: controller.intervaloKmController,
+    ? Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _InlineField(
+              label: 'Intervalo em km',
+              controller: controller.intervaloKmController,
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.secondary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: AppColors.secondary.withValues(alpha: 0.2),
+                ),
+              ),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 18,
+                    color: AppColors.onSecondaryContainer,
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Como calculamos a data: usamos sua última quilometragem registrada e a média de quanto você roda por dia (baseado no seu histórico) para estimar quando vai atingir a quilometragem do lembrete. Sempre que você atualizar o km do veículo, essa data será ajustada automaticamente.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.onSurfaceVariant,
+                        height: 1.4,
+                      ),
                     ),
-                  )
-                : null,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      )
+    : null,
           ),
         ],
       ),

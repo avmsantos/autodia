@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 
 import '../../core/calculations/maintenance_calculator.dart';
@@ -27,10 +29,19 @@ class VehicleDetailController extends GetxController {
   Vehicle get vehicle => _vehicleRx.value;
   set vehicle(Vehicle v) => _vehicleRx.value = v;
 
+  /// true assim que o veículo é excluído — a tela escuta isso pra fechar
+  /// sozinha, em vez de continuar tentando mostrar dados de um veículo que
+  /// não existe mais.
+  final RxBool foiExcluido = false.obs;
+
   final RxList<MaintenanceEvent> events = <MaintenanceEvent>[].obs;
   final RxList<ReminderWithResult> reminders = <ReminderWithResult>[].obs;
   final RxMap<String, MaintenanceCategory> categoriesById =
       <String, MaintenanceCategory>{}.obs;
+
+  StreamSubscription<Vehicle?>? _vehicleSub;
+  StreamSubscription<List<MaintenanceEvent>>? _eventsSub;
+  StreamSubscription<List<Reminder>>? _remindersSub;
 
   @override
   void onInit() {
@@ -40,10 +51,19 @@ class VehicleDetailController extends GetxController {
 
     // Mantém `vehicle` sempre sincronizado com o banco — pega tanto edições
     // feitas por essa tela quanto por qualquer outra (ex: editar veículo).
-    _db.watchVehicleById(vehicle.id).listen((v) => vehicle = v);
+    // `v` pode vir null se o veículo foi excluído: nesse caso não tem mais
+    // dado nenhum pra atualizar, só avisa a tela pra fechar sozinha.
+    _vehicleSub = _db.watchVehicleById(vehicle.id).listen((v) {
+      if (v != null) {
+        vehicle = v;
+      } else {
+        foiExcluido.value = true;
+      }
+    });
 
-    _db.streamEventsForVehicle(vehicle.id).listen(events.assignAll);
-    _db.streamRemindersForVehicle(vehicle.id).listen(_recalculateReminders);
+    _eventsSub = _db.streamEventsForVehicle(vehicle.id).listen(events.assignAll);
+    _remindersSub =
+        _db.streamRemindersForVehicle(vehicle.id).listen(_recalculateReminders);
   }
 
   Future<void> _loadCategories() async {
@@ -104,5 +124,13 @@ class VehicleDetailController extends GetxController {
       await _notificationService.cancelReminderNotification(item.reminder.id);
     }
     await _db.deleteVehicle(vehicle.id);
+  }
+
+  @override
+  void onClose() {
+    _vehicleSub?.cancel();
+    _eventsSub?.cancel();
+    _remindersSub?.cancel();
+    super.onClose();
   }
 }

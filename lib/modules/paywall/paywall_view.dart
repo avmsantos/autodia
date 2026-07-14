@@ -129,7 +129,7 @@ class PaywallView extends GetView<PaywallController> {
                   () => _PlansSection(
                     packages: packages,
                     isPurchasing: controller.isPurchasing.value,
-                    onConfirm: controller.comprar,
+                    onConfirm: controller.tentarComprar,
                   ),
                 ),
 
@@ -217,8 +217,8 @@ class _BenefitCard extends StatelessWidget {
 
 /// Lista de planos com seleção visual local (destaca o plano escolhido) e um
 /// botão único de confirmação — isso é só estado de UI; a chamada de compra
-/// de verdade continua sendo `controller.comprar(pkg)`, exatamente como
-/// antes.
+/// de verdade continua sendo `controller.tentarComprar(pkg)`, que decide se
+/// precisa avisar sobre login antes de seguir pra `comprar` de verdade.
 class _PlansSection extends StatefulWidget {
   final List<Package> packages;
   final bool isPurchasing;
