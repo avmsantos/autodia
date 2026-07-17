@@ -137,6 +137,28 @@ class AppDatabase extends _$AppDatabase {
         .get();
   }
 
+  /// Cria uma categoria customizada pelo usuário (ex: "Bateria da moto",
+  /// "Troca de correia"). `tipoCalculo` decide se a tela de lembrete mostra
+  /// campos de km (uso) ou só data (calendario).
+  Future<String> insertCustomCategory({
+    required String nome,
+    required String veiculoTipoAplicavel,
+    required String tipoCalculo,
+  }) async {
+    final id = _uuid.v4();
+    await into(maintenanceCategories).insert(
+      MaintenanceCategoriesCompanion.insert(
+        id: id,
+        nome: nome,
+        veiculoTipoAplicavel: veiculoTipoAplicavel,
+        icone: const Value('category'),
+        customizada: const Value(true),
+        tipoCalculo: Value(tipoCalculo),
+      ),
+    );
+    return id;
+  }
+
   Future<void> _seedCategories() async {
     final seed = <MaintenanceCategoriesCompanion>[
       // ambos — mecânicas (uso)

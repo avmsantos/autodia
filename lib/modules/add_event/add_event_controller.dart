@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -9,8 +10,12 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/services/interstitial_ad_service.dart';
 import '../../core/services/notification_service.dart';
+import '../../core/services/review_prompt_service.dart';
 import '../../data/local/app_database.dart';
-import '../../widgets/app_snackbar.dart';
+
+/// Sentinela usado no dropdown de categoria pra representar a opção
+/// "+ Nova categoria" — não é um id de categoria de verdade.
+const String kNovaCategoriaSentinela = '__nova_categoria__';
 
 class AddEventController extends GetxController {
   final AppDatabase _db = Get.find<AppDatabase>();
@@ -71,6 +76,22 @@ class AddEventController extends GetxController {
     }
   }
 
+  /// Cria uma categoria nova (customizada) e já deixa ela selecionada.
+  /// `tipoCalculo` é `uso` (mecânica, com km) ou `calendario` (só data).
+  Future<void> criarCategoriaPersonalizada({
+    required String nome,
+    required String tipoCalculo,
+  }) async {
+    final id = await _db.insertCustomCategory(
+      nome: nome,
+      veiculoTipoAplicavel: vehicle.tipo,
+      tipoCalculo: tipoCalculo,
+    );
+    final list = await _db.categoriesForType(vehicle.tipo);
+    categorias.assignAll(list);
+    categoriaSelecionada.value = list.firstWhereOrNull((c) => c.id == id);
+  }
+
   Future<void> escolherAnexoDaCamera() => _escolherAnexo(ImageSource.camera);
   Future<void> escolherAnexoDaGaleria() => _escolherAnexo(ImageSource.gallery);
 
@@ -97,16 +118,17 @@ class AddEventController extends GetxController {
 
   Future<void> salvar() async {
     if (categoriaSelecionada.value == null) {
-      showErrorSnackbar(
-        title: 'Falta a categoria',
-        message: 'Escolha o tipo de manutenção.',
-      );
+      Get.snackbar('Falta a categoria', 'Escolha o tipo de manutenção.');
+      return;
+    }
+    if (kmController.text.trim().isEmpty || int.tryParse(kmController.text.trim()) == null) {
+      Get.snackbar('Km inválido', 'Informe a quilometragem usando só números.');
       return;
     }
 
     isSaving.value = true;
     try {
-      final km = int.tryParse(kmController.text);
+      final km = int.parse(kmController.text.trim());
       final valorGasto = double.tryParse(valorController.text.replaceAll(',', '.'));
       final oficina = oficinaController.text.trim().isEmpty
           ? null
@@ -143,7 +165,7 @@ class AddEventController extends GetxController {
       // Se o km informado for maior que o atual do veículo, atualiza —
       // é o "sensor" mais confiável que o app tem: o próprio usuário
       // reportando quilometragem ao registrar manutenção.
-      if (km != null && km > vehicle.kmAtual) {
+      if (km > vehicle.kmAtual) {
         await _db.updateVehicleKm(vehicle.id, km);
         vehicle = vehicle.copyWith(kmAtual: km, kmAtualizadoEm: DateTime.now());
       }
@@ -153,8 +175,12 @@ class AddEventController extends GetxController {
       // com o cálculo mais recente.
       await _notificationService.rescheduleAllForVehicle(_db, vehicle);
 
+      final eraEdicao = isEditing;
       Get.back();
       Get.find<InterstitialAdService>().talvezMostrar();
+      if (!eraEdicao) {
+        Get.find<ReviewPromptService>().registrarEventoERevisarPrompt();
+      }
     } finally {
       isSaving.value = false;
     }

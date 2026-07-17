@@ -29,7 +29,10 @@ class ProfileController extends GetxController {
 
   static const _urlPoliticaETermos = 'https://autodia-974dd.web.app';
 
-  bool get isLoggedIn => _authService.isLoggedIn;
+  // Usa `isGoogleLinked`, não `isLoggedIn` — "Continuar sem login" também
+  // cria um usuário no Firebase (anônimo), então `isLoggedIn` sozinho não
+  // serve pra decidir se mostra o perfil de conta real ou o de "sem login".
+  bool get isLoggedIn => _authService.isGoogleLinked;
   String? get nome => _authService.currentUser.value?.displayName;
   String? get email => _authService.currentUser.value?.email;
   String? get fotoUrl => _authService.currentUser.value?.photoURL;
@@ -50,8 +53,12 @@ class ProfileController extends GetxController {
   }
 
   Future<void> sair() async {
-    await _authService.signOut();
+    // Navega ANTES de deslogar de propósito: se deslogar primeiro, o
+    // Obx dessa própria tela reage na hora (currentUser vira null) e mostra
+    // o estado "sem login" por uma fração de segundo antes de navegar —
+    // essa ordem evita esse flash.
     Get.offAllNamed(AppRoutes.login);
+    await _authService.signOut();
   }
 
   void irParaPremium() => Get.toNamed(AppRoutes.paywall);

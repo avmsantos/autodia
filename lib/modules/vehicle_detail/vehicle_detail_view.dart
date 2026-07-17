@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -53,10 +54,10 @@ class VehicleDetailView extends GetView<VehicleDetailController> {
             ),
           ],
           bottom: const PreferredSize(
-            preferredSize:  Size.fromHeight(80),
+            preferredSize: Size.fromHeight(80),
             child: Padding(
-              padding:  EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child:  _SegmentedTabs(),
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: _SegmentedTabs(),
             ),
           ),
         ),
@@ -115,30 +116,134 @@ class VehicleDetailView extends GetView<VehicleDetailController> {
   }
 
   Future<void> _confirmarExclusaoVeiculo(BuildContext context) async {
-    final confirmou = await showDialog<bool>(
+    final confirmou = await showGeneralDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Excluir veículo?'),
-        content: const Text(
-          'Isso remove o veículo, o histórico de manutenções e os lembretes '
-          'associados a ele. Não dá pra desfazer.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+      barrierLabel: 'Excluir veículo',
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.15),
+      transitionDuration: const Duration(milliseconds: 220),
+      pageBuilder: (context, anim1, anim2) => const SizedBox.shrink(),
+      transitionBuilder: (context, anim1, anim2, _) {
+        final blur = 6 * anim1.value;
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+          child: FadeTransition(
+            opacity: anim1,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.94, end: 1).animate(
+                CurvedAnimation(parent: anim1, curve: Curves.easeOut),
+              ),
+              child: const _DeleteVehicleDialog(),
+            ),
           ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Excluir'),
-          ),
-        ],
-      ),
+        );
+      },
     );
     if (confirmou == true) {
       await controller.excluirVeiculo();
       Get.back();
     }
+  }
+}
+
+/// Alerta de exclusão de veículo com fundo desfocado (mesmo tratamento do
+/// alerta de exclusão de conta) — só aparência, a chamada real continua em
+/// `controller.excluirVeiculo()`.
+class _DeleteVehicleDialog extends StatelessWidget {
+  const _DeleteVehicleDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 28),
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 24,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: const BoxDecoration(
+                    color: AppColors.dangerBorder,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.warning_amber_rounded,
+                      color: AppColors.error, size: 28),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Excluir veículo?',
+                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                const Text.rich(
+                  TextSpan(
+                    style: TextStyle(
+                        color: AppColors.onSurfaceVariant,
+                        fontSize: 14,
+                        height: 1.4),
+                    children: [
+                      TextSpan(
+                        text:
+                            'Isso remove o veículo, o histórico de manutenções e os '
+                            'lembretes associados a ele. ',
+                      ),
+                      TextSpan(
+                        text: 'Não dá pra desfazer.',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: FilledButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: const Text(
+                      'Excluir',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  style: TextButton.styleFrom(
+                      foregroundColor: AppColors.onSurfaceVariant,),
+                  child: const Text('Cancelar',
+                      style: TextStyle(fontWeight: FontWeight.w700)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -189,7 +294,8 @@ class _SegmentButton extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _SegmentButton({required this.label, required this.selected, required this.onTap});
+  const _SegmentButton(
+      {required this.label, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -217,7 +323,8 @@ class _SegmentButton extends StatelessWidget {
           style: TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 14,
-            color: selected ? AppColors.onBackground : AppColors.onSurfaceVariant,
+            color:
+                selected ? AppColors.onBackground : AppColors.onSurfaceVariant,
           ),
         ),
       ),
@@ -269,7 +376,8 @@ class _RemindersTabContent extends GetView<VehicleDetailController> {
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.4)),
+                    border: Border.all(
+                        color: AppColors.outlineVariant.withValues(alpha: 0.4)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -293,8 +401,10 @@ class _RemindersTabContent extends GetView<VehicleDetailController> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              controller.categoryName(item.reminder.categoriaId),
-                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                              controller
+                                  .categoryName(item.reminder.categoriaId),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w800, fontSize: 16),
                             ),
                           ),
                           StatusBadge(status: result.status),
@@ -306,7 +416,9 @@ class _RemindersTabContent extends GetView<VehicleDetailController> {
                       Row(
                         children: [
                           Icon(
-                            temKm ? Icons.speed_outlined : Icons.calendar_today_outlined,
+                            temKm
+                                ? Icons.speed_outlined
+                                : Icons.calendar_today_outlined,
                             size: 16,
                             color: AppColors.onSurfaceVariant,
                           ),
@@ -314,10 +426,13 @@ class _RemindersTabContent extends GetView<VehicleDetailController> {
                           Expanded(
                             child: Text(
                               _subtitleFor(result),
-                              style: const TextStyle(color: AppColors.onSurfaceVariant, fontSize: 13),
+                              style: const TextStyle(
+                                  color: AppColors.onSurfaceVariant,
+                                  fontSize: 13),
                             ),
                           ),
-                         const Icon(Icons.chevron_right, color: AppColors.outlineVariant),
+                          const Icon(Icons.chevron_right,
+                              color: AppColors.outlineVariant),
                         ],
                       ),
                     ],
@@ -334,7 +449,8 @@ class _RemindersTabContent extends GetView<VehicleDetailController> {
   String _subtitleFor(dynamic result) {
     final parts = <String>[];
     if (result.effectiveDueDate != null) {
-      parts.add('até ${DateFormat('dd/MM/yyyy').format(result.effectiveDueDate)}');
+      parts.add(
+          'até ${DateFormat('dd/MM/yyyy').format(result.effectiveDueDate)}');
     }
     if (result.nextDueKm != null) {
       parts.add('ou ${result.nextDueKm} km');
@@ -381,7 +497,8 @@ class _HistoryTabContent extends GetView<VehicleDetailController> {
                 const SizedBox(height: 4),
                 Text(
                   'R\$ ${totalGasto.toStringAsFixed(2).replaceAll('.', ',')}',
-                  style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+                  style: const TextStyle(
+                      fontSize: 26, fontWeight: FontWeight.w800),
                 ),
               ],
             ),
@@ -403,7 +520,9 @@ class _HistoryTabContent extends GetView<VehicleDetailController> {
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.4)),
+                      border: Border.all(
+                          color:
+                              AppColors.outlineVariant.withValues(alpha: 0.4)),
                     ),
                     child: Row(
                       children: [
@@ -431,16 +550,21 @@ class _HistoryTabContent extends GetView<VehicleDetailController> {
                             children: [
                               Text(
                                 controller.categoryName(e.categoriaId),
-                                style: const TextStyle(fontWeight: FontWeight.w700),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 [
-                                  DateFormat('dd/MM/yyyy').format(e.dataRealizada),
-                                  if (e.kmRealizado != null) '${e.kmRealizado} km',
+                                  DateFormat('dd/MM/yyyy')
+                                      .format(e.dataRealizada),
+                                  if (e.kmRealizado != null)
+                                    '${e.kmRealizado} km',
                                   if (e.oficina != null) e.oficina!,
                                 ].join(' · '),
-                                style: const TextStyle(color: AppColors.onSurfaceVariant, fontSize: 12),
+                                style: const TextStyle(
+                                    color: AppColors.onSurfaceVariant,
+                                    fontSize: 12),
                               ),
                             ],
                           ),
@@ -474,7 +598,8 @@ class _EmptyTabState extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.description,
-  }) : actionLabel = null, onAction = null;
+  })  : actionLabel = null,
+        onAction = null;
 
   @override
   Widget build(BuildContext context) {
@@ -501,12 +626,15 @@ class _EmptyTabState extends StatelessWidget {
               child: Icon(icon, size: 40, color: AppColors.secondary),
             ),
             const SizedBox(height: 20),
-            Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+            Text(title,
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
             Text(
               description,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.onSurfaceVariant, height: 1.4),
+              style: const TextStyle(
+                  color: AppColors.onSurfaceVariant, height: 1.4),
             ),
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: 24),
@@ -518,9 +646,11 @@ class _EmptyTabState extends StatelessWidget {
                     backgroundColor: AppColors.onBackground,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 24),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
                   ),
-                  child: Text(actionLabel!, style: const TextStyle(fontWeight: FontWeight.w700)),
+                  child: Text(actionLabel!,
+                      style: const TextStyle(fontWeight: FontWeight.w700)),
                 ),
               ),
             ],

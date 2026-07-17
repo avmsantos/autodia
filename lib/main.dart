@@ -13,6 +13,7 @@ import 'core/services/battery_optimization_service.dart';
 import 'core/services/interstitial_ad_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/purchase_service.dart';
+import 'core/services/review_prompt_service.dart';
 import 'data/local/app_database.dart';
 import 'firebase_options.dart';
 import 'theme/app_theme.dart';
@@ -25,12 +26,14 @@ Future<void> main() async {
   // initializeApp() de novo aqui pode disparar "duplicate-app" mesmo sendo
   // a primeira vez do lado Dart — isso é inofensivo, só ignoramos.
   try {
-    await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   } on FirebaseException catch (e) {
     if (e.code != 'duplicate-app') rethrow;
   }
 
+  // Crashlytics: captura crashes do Flutter (erros de widget/build) e do
+  // Dart puro (erros fora da árvore de widget, ex: em Future não tratada).
+  // Em debug, desativamos o envio pra não poluir o painel com erro de dev.
   await FirebaseCrashlytics.instance
       .setCrashlyticsCollectionEnabled(!kDebugMode);
   FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
@@ -49,6 +52,7 @@ Future<void> main() async {
   Get.put(notificationService, permanent: true);
 
   Get.put(BatteryOptimizationService(), permanent: true);
+  Get.put(ReviewPromptService(), permanent: true);
 
   // RevenueCat: chave pública Android criada no dashboard.
   final purchaseService = await PurchaseService().init(

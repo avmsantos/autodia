@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -79,28 +81,114 @@ class AddReminderView extends GetView<AddReminderController> {
     );
   }
 
-  Future<void> _confirmarExclusao(BuildContext context) async {
-    final confirmou = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Excluir lembrete?'),
-        content: const Text('Isso remove o lembrete e cancela a notificação agendada.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+Future<void> _confirmarExclusao(BuildContext context) async {
+  final confirmou = await showGeneralDialog<bool>(
+    context: context,
+    barrierLabel: 'Excluir lembrete',
+    barrierDismissible: true,
+    barrierColor: Colors.black.withValues(alpha: 0.15),
+    transitionDuration: const Duration(milliseconds: 220),
+    pageBuilder: (context, anim1, anim2) => const SizedBox.shrink(),
+    transitionBuilder: (context, anim1, anim2, _) {
+      final blur = 6 * anim1.value;
+      return BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        child: FadeTransition(
+          opacity: anim1,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.94, end: 1).animate(
+              CurvedAnimation(parent: anim1, curve: Curves.easeOut),
+            ),
+            child: const _DeleteReminderDialog(),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Excluir'),
+        ),
+      );
+    },
+  );
+  if (confirmou == true) {
+    await controller.excluir();
+  }
+}
+}
+ 
+/// Alerta de exclusão de lembrete com fundo desfocado (mesmo tratamento do
+/// alerta de exclusão de conta) — só aparência, a chamada real continua em
+/// `controller.excluir()`.
+class _DeleteReminderDialog extends StatelessWidget {
+  const _DeleteReminderDialog();
+ 
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 28),
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 24,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: const BoxDecoration(
+                    color: AppColors.dangerBorder,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 28),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Excluir lembrete?',
+                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Isso remove o lembrete e cancela a notificação agendada.',
+                  style: TextStyle(color: AppColors.onSurfaceVariant, fontSize: 14, height: 1.4),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: FilledButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: const Text(
+                      'Excluir',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  style: TextButton.styleFrom(foregroundColor: AppColors.onSurfaceVariant),
+                  child: const Text('Cancelar', style: TextStyle(fontWeight: FontWeight.w700)),
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
-    if (confirmou == true) {
-      await controller.excluir();
-    }
   }
 }
 
